@@ -76,15 +76,28 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
+      { name: "theme-color", content: "#0F0F1A" },
+      { title: "Golden Reads – Discover, Buy and Read Books Anywhere" },
+      {
+        name: "description",
+        content:
+          "Golden Reads is a modern book marketplace and digital reading platform where you can discover bestsellers, build a personal library, and enjoy immersive reading on any device.",
+      },
+      {
+        name: "keywords",
+        content:
+          "books, ebooks, audiobooks, online bookstore, digital library, reading app, book recommendations, reading tracker",
+      },
+      { property: "og:title", content: "Golden Reads – Discover, Buy and Read Books Anywhere" },
+      {
+        property: "og:description",
+        content:
+          "Discover bestsellers, build a personal library and enjoy immersive reading anywhere with Golden Reads.",
+      },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { property: "og:site_name", content: "Golden Reads" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
       {
