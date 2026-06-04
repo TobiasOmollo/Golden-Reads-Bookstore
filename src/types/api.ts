@@ -28,6 +28,8 @@ export interface Article {
   id: string;
   title: string;
   publication: string;
+  country?: string;
+  category?: string;
   heroImage: string;
   summary: string;
   sourceUrl: string;
