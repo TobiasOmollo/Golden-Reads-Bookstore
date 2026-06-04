@@ -5,7 +5,6 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Fonts */
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:wght@500;600;700&display=swap");
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

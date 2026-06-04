@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Eye, EyeOff } from "lucide-react";
 import { Wordmark } from "@/components/Logo";
-import logoAsset from "@/assets/golden-reads-logo.png.asset.json";
+import logoAsset from "@/assets/golden-reads-logo.png";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -41,7 +41,7 @@ function LoginPage() {
           transition={{ duration: 0.4 }}
           className="text-center"
         >
-          <img src={logoAsset.url} alt="" className="w-16 h-16 mx-auto" />
+          <img src={logoAsset} alt="" className="w-16 h-16 mx-auto" />
           <Wordmark className="text-[22px] block mt-2" />
           <p className="font-serif italic text-muted-foreground mt-3">
             Welcome back to your library.

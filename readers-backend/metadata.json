@@ -1,0 +1,6 @@
+{
+  "name": "Readers Backend",
+  "description": "Production-ready FastAPI backend and interactive PWA client for reading e-books, audiobooks, podcasts, and news.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

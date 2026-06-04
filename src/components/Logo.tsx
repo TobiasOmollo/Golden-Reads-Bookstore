@@ -1,9 +1,9 @@
-import logoAsset from "@/assets/golden-reads-logo.png.asset.json";
+import logoAsset from "@/assets/golden-reads-logo.png";
 
 export function Logo({ size = 28 }: { size?: number }) {
   return (
     <img
-      src={logoAsset.url}
+      src={logoAsset}
       alt="Golden Reads"
       width={size}
       height={size}

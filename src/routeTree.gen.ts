@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as MagazinesRouteImport } from './routes/magazines'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LibraryRouteImport } from './routes/library'
 import { Route as DiscoverRouteImport } from './routes/discover'
@@ -25,6 +26,11 @@ const WishlistRoute = WishlistRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MagazinesRoute = MagazinesRouteImport.update({
+  id: '/magazines',
+  path: '/magazines',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/discover': typeof DiscoverRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/magazines': typeof MagazinesRoute
   '/profile': typeof ProfileRoute
   '/wishlist': typeof WishlistRoute
   '/book/$id': typeof BookIdRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/discover': typeof DiscoverRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/magazines': typeof MagazinesRoute
   '/profile': typeof ProfileRoute
   '/wishlist': typeof WishlistRoute
   '/book/$id': typeof BookIdRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/discover': typeof DiscoverRoute
   '/library': typeof LibraryRoute
   '/login': typeof LoginRoute
+  '/magazines': typeof MagazinesRoute
   '/profile': typeof ProfileRoute
   '/wishlist': typeof WishlistRoute
   '/book/$id': typeof BookIdRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/library'
     | '/login'
+    | '/magazines'
     | '/profile'
     | '/wishlist'
     | '/book/$id'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/library'
     | '/login'
+    | '/magazines'
     | '/profile'
     | '/wishlist'
     | '/book/$id'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/discover'
     | '/library'
     | '/login'
+    | '/magazines'
     | '/profile'
     | '/wishlist'
     | '/book/$id'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   DiscoverRoute: typeof DiscoverRoute
   LibraryRoute: typeof LibraryRoute
   LoginRoute: typeof LoginRoute
+  MagazinesRoute: typeof MagazinesRoute
   ProfileRoute: typeof ProfileRoute
   WishlistRoute: typeof WishlistRoute
   BookIdRoute: typeof BookIdRoute
@@ -135,6 +148,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/magazines': {
+      id: '/magazines'
+      path: '/magazines'
+      fullPath: '/magazines'
+      preLoaderRoute: typeof MagazinesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   DiscoverRoute: DiscoverRoute,
   LibraryRoute: LibraryRoute,
   LoginRoute: LoginRoute,
+  MagazinesRoute: MagazinesRoute,
   ProfileRoute: ProfileRoute,
   WishlistRoute: WishlistRoute,
   BookIdRoute: BookIdRoute,
@@ -187,3 +208,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

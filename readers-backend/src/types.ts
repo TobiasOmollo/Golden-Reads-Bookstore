@@ -8,10 +8,10 @@ export interface Book {
   genre: string[];
   description: string;
   pages: number;
-  readingTime: string;
-  formats: ("epub" | "audio")[];
+  readingTime: number; // in minutes
+  formats: string[];
   gutendexId?: number;
-  librivoxId?: string;
+  librivoxId?: number;
 }
 
 export interface Episode {
@@ -19,7 +19,7 @@ export interface Episode {
   title: string;
   show: string;
   artwork: string;
-  duration: number;
+  duration: number; // in seconds
   enclosureUrl: string;
   publishedAt: string;
 }
@@ -28,22 +28,10 @@ export interface Article {
   id: string;
   title: string;
   publication: string;
-  country?: string;
-  category?: string;
   heroImage: string;
   summary: string;
   sourceUrl: string;
   publishedAt: string;
-}
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar: string;
-  genres: string[];
-  readingGoal: number;
-  preferredFormats: string[];
 }
 
 export interface AudiobookChapter {
@@ -69,6 +57,11 @@ export interface PodcastChannel {
   description: string;
   artwork: string;
   feedUrl: string;
+}
+
+export interface Flashcard {
+  front: string;
+  back: string;
 }
 
 export interface RecommendResponse {

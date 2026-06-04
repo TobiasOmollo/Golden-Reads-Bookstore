@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
@@ -9,10 +9,17 @@ import { GENRES } from "@/data/genres";
 import { api } from "@/lib/api/client";
 import booksData from "@/data/books.json";
 import type { Book } from "@/types";
+import { z } from "zod";
 
 const fallbackBooks = booksData as Book[];
 
+const discoverSearchSchema = z.object({
+  q: z.string().optional().catch(""),
+  genre: z.string().optional().catch("All"),
+});
+
 export const Route = createFileRoute("/discover")({
+  validateSearch: (search) => discoverSearchSchema.parse(search),
   head: () => ({
     meta: [
       { title: "Discover – Golden Reads" },
@@ -23,14 +30,40 @@ export const Route = createFileRoute("/discover")({
 });
 
 function DiscoverPage() {
-  const [q, setQ] = useState("");
-  const [debounced, setDebounced] = useState("");
-  const [genre, setGenre] = useState<string>("All");
+  const { q: searchQ = "", genre: searchGenre = "All" } = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+
+  const [q, setQ] = useState(searchQ);
+  const [genre, setGenre] = useState<string>(searchGenre);
+
+  // Sync state with URL search params when they change
+  useEffect(() => {
+    setQ(searchQ);
+  }, [searchQ]);
 
   useEffect(() => {
-    const t = setTimeout(() => setDebounced(q.trim()), 300);
+    setGenre(searchGenre);
+  }, [searchGenre]);
+
+  const [debounced, setDebounced] = useState(searchQ);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebounced(q.trim());
+      navigate({
+        search: (prev) => ({ ...prev, q: q.trim() }),
+        replace: true,
+      });
+    }, 300);
     return () => clearTimeout(t);
-  }, [q]);
+  }, [q, navigate]);
+
+  const handleGenreChange = (g: string) => {
+    setGenre(g);
+    navigate({
+      search: (prev) => ({ ...prev, genre: g }),
+    });
+  };
 
   const { data: searchResults, isLoading } = useQuery<Book[]>({
     queryKey: ["books", "search", debounced, genre],
@@ -41,11 +74,11 @@ function DiscoverPage() {
   const filtered = useMemo(() => {
     if (debounced.length > 1 && searchResults) return searchResults;
     return fallbackBooks.filter(
-      (b) =>
-        (genre === "All" || b.genre.includes(genre)) &&
-        (debounced === "" ||
-          b.title.toLowerCase().includes(debounced.toLowerCase()) ||
-          b.author.toLowerCase().includes(debounced.toLowerCase())),
+        (b) =>
+            (genre === "All" || b.genre.includes(genre)) &&
+            (debounced === "" ||
+                b.title.toLowerCase().includes(debounced.toLowerCase()) ||
+                b.author.toLowerCase().includes(debounced.toLowerCase())),
     );
   }, [debounced, genre, searchResults]);
 
@@ -56,7 +89,7 @@ function DiscoverPage() {
       <div className="px-5 pt-4">
         <h1 className="font-display text-2xl font-semibold">Discover</h1>
         <p className="text-sm text-muted-foreground">Find your next favourite read.</p>
-
+        
         <div className="mt-4 relative">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -75,7 +108,7 @@ function DiscoverPage() {
           {["All", ...GENRES].map((g) => (
             <button
               key={g}
-              onClick={() => setGenre(g)}
+              onClick={() => handleGenreChange(g)}
               aria-pressed={genre === g}
               className={`shrink-0 px-3.5 py-1.5 rounded-md font-mono text-[11px] uppercase tracking-wider transition-colors ${
                 genre === g
@@ -89,7 +122,7 @@ function DiscoverPage() {
         </div>
       </div>
 
-      <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-6 px-5 mt-6">
+      <motion.div layout className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-4 gap-y-8 px-5 mt-6 justify-center">
         {showSkeletons
           ? Array.from({ length: 6 }).map((_, i) => <BookCardSkeleton key={i} />)
           : filtered.map((b) => (
