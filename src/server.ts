@@ -1,54 +1,93 @@
-import "./lib/error-capture";
+import type { Book, Article, Episode, Flashcard } from "@/types";
 
-import { consumeLastCapturedError } from "./lib/error-capture";
-import { renderErrorPage } from "./lib/error-page";
+// Import your local JSON fallbacks as requested to preserve offline functionality
+import mockBooks from "@/data/books.json";
+import mockMagazines from "@/data/magazines.json";
+import mockPodcasts from "@/data/podcasts.json";
 
-type ServerEntry = {
-  fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
-};
+const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000";
 
-let serverEntryPromise: Promise<ServerEntry> | undefined;
-
-async function getServerEntry(): Promise<ServerEntry> {
-  if (!serverEntryPromise) {
-    serverEntryPromise = import("@tanstack/react-start/server-entry").then(
-      (m) => (m.default ?? m) as ServerEntry,
-    );
+// Robust fallback wrapper execution
+async function handleFetchWithFallback<T>(networkRequest: () => Promise<T>, fallbackData: T): Promise<T> {
+  try {
+    return await networkRequest();
+  } catch (error) {
+    console.warn("Backend unavailable or returned an error. Using offline JSON fallback data.", error);
+    return fallbackData;
   }
-  return serverEntryPromise;
 }
 
-// h3 swallows in-handler throws into a normal 500 Response with body
-// {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
-  if (response.status < 500) return response;
-  const contentType = response.headers.get("content-type") ?? "";
-  if (!contentType.includes("application/json")) return response;
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE}${path}`);
+  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+  return (await res.json()) as T;
+}
 
-  const body = await response.clone().text();
-  if (!body.includes('"unhandled":true') || !body.includes('"message":"HTTPError"')) {
-    return response;
-  }
-
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
-  return new Response(renderErrorPage(), {
-    status: 500,
-    headers: { "content-type": "text/html; charset=utf-8" },
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   });
+  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+  return (await res.json()) as T;
 }
 
-export default {
-  async fetch(request: Request, env: unknown, ctx: unknown) {
-    try {
-      const handler = await getServerEntry();
-      const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
-    } catch (error) {
-      console.error(error);
-      return new Response(renderErrorPage(), {
-        status: 500,
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
-    }
+export const api = {
+  books: {
+    trending: () => 
+      handleFetchWithFallback<Book[]>(() => get<Book[]>("/books/trending"), mockBooks as unknown as Book[]),
+    search: (q: string, genre = "") =>
+      handleFetchWithFallback<Book[]>(
+        () => get<Book[]>(`/books/search?q=${encodeURIComponent(q)}&genre=${encodeURIComponent(genre)}`),
+        mockBooks as unknown as Book[]
+      ),
+    detail: (id: string) => 
+      handleFetchWithFallback<Book>(
+        () => get<Book>(`/books/${id}`), 
+        (mockBooks as unknown as Book[]).find(b => b.id === id) || (mockBooks[0] as unknown as Book)
+      ),
+    coverUrl: (id: string) => `${BASE}/books/${id}/cover`,
+  },
+  audio: {
+    search: (q: string) => 
+      handleFetchWithFallback<Book[]>(() => get<Book[]>(`/audiobooks/search?q=${encodeURIComponent(q)}`), mockBooks as unknown as Book[]),
+    detail: (id: string) => 
+      handleFetchWithFallback<Book>(
+        () => get<Book>(`/audiobooks/${id}`),
+        (mockBooks as unknown as Book[]).find(b => b.id === id) || (mockBooks[0] as unknown as Book)
+      ),
+  },
+  podcasts: {
+    search: (q: string) => 
+      handleFetchWithFallback<Episode[]>(() => get<Episode[]>(`/podcasts/search?q=${encodeURIComponent(q)}`), mockPodcasts as unknown as Episode[]),
+    episodes: (feedId: string) => 
+      handleFetchWithFallback<Episode[]>(() => get<Episode[]>(`/podcasts/${feedId}/episodes`), mockPodcasts as unknown as Episode[]),
+  },
+  magazines: {
+    bulletin: (limit = 30) => 
+      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/bulletin?limit=${limit}`), mockMagazines as unknown as Article[]),
+    eastAfrica: (limit = 60) => 
+      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/eastafrica?limit=${limit}`), mockMagazines as unknown as Article[]),
+    business: (limit = 30) => 
+      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/business?limit=${limit}`), mockMagazines as unknown as Article[]),
+    lifestyle: (limit = 20) => 
+      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/lifestyle?limit=${limit}`), mockMagazines as unknown as Article[]),
+    technology: (limit = 20) => 
+      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/technology?limit=${limit}`), mockMagazines as unknown as Article[]),
+    feeds: (countries = "", categories = "", limit = 60) =>
+      handleFetchWithFallback<Article[]>(
+        () => get<Article[]>(`/magazines/feeds?countries=${encodeURIComponent(countries)}&categories=${encodeURIComponent(categories)}&limit=${limit}`),
+        mockMagazines as unknown as Article[]
+      ),
+  },
+  ai: {
+    summarize: (bookId: string, chapter: string) =>
+      post<{ summary: string }>(`/ai/summarize`, { bookId, chapter }),
+    flashcards: (text: string) => post<Flashcard[]>(`/ai/flashcards`, { text }),
+    recommend: (genres: string[], history: string[]) =>
+      post<Book[]>(`/ai/recommend`, { genres, history }),
+    explain: (passage: string, context: string) =>
+      post<{ explanation: string }>(`/ai/explain`, { passage, context }),
   },
 };
