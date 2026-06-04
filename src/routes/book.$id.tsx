@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Star, Heart, BookOpen, Headphones, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
@@ -9,8 +10,9 @@ import { useCart } from "@/store/cart";
 import { useWishlist } from "@/store/wishlist";
 import { useLibrary } from "@/store/library";
 import { formatKES } from "@/lib/format";
+import { api } from "@/lib/api/client";
 import booksData from "@/data/books.json";
-import type { Book } from "@/types/api";
+import type { Book } from "@/types";
 
 const books = booksData as Book[];
 
@@ -37,7 +39,12 @@ export const Route = createFileRoute("/book/$id")({
 function BookDetail() {
   const { id } = Route.useParams();
   const router = useRouter();
-  const book = books.find((b) => b.id === id);
+  const fallback = books.find((b) => b.id === id) ?? books[0];
+  const { data: book = fallback } = useQuery<Book>({
+    queryKey: ["book", id],
+    queryFn: () => api.books.detail(id),
+    initialData: fallback,
+  });
   const add = useCart((s) => s.add);
   const wish = useWishlist();
   const upsert = useLibrary((s) => s.upsert);
@@ -53,6 +60,7 @@ function BookDetail() {
     );
   }
 
+  const coverSrc = book.cover?.startsWith("http") ? book.cover : api.books.coverUrl(book.id);
   const similar = books.filter((b) => b.id !== book.id && b.genre.some((g) => book.genre.includes(g))).slice(0, 8);
 
   return (
@@ -64,7 +72,7 @@ function BookDetail() {
           transition={{ duration: 0.4 }}
           className="relative w-full h-[60vw] max-h-[420px] bg-muted overflow-hidden"
         >
-          <img src={book.cover} alt="" className="w-full h-full object-cover" />
+          <img src={coverSrc} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-background" />
           <button
             aria-label="Go back"

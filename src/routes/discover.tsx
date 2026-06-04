@@ -1,14 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { BookCard, BookCardSkeleton } from "@/components/book/BookCard";
 import { GENRES } from "@/data/genres";
+import { api } from "@/lib/api/client";
 import booksData from "@/data/books.json";
-import type { Book } from "@/types/api";
+import type { Book } from "@/types";
 
-const books = booksData as Book[];
+const fallbackBooks = booksData as Book[];
 
 export const Route = createFileRoute("/discover")({
   head: () => ({
@@ -22,20 +24,32 @@ export const Route = createFileRoute("/discover")({
 
 function DiscoverPage() {
   const [q, setQ] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [genre, setGenre] = useState<string>("All");
-  const [loading] = useState(false);
 
-  const filtered = useMemo(
-    () =>
-      books.filter(
-        (b) =>
-          (genre === "All" || b.genre.includes(genre)) &&
-          (q.trim() === "" ||
-            b.title.toLowerCase().includes(q.toLowerCase()) ||
-            b.author.toLowerCase().includes(q.toLowerCase())),
-      ),
-    [q, genre],
-  );
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(q.trim()), 300);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const { data: searchResults, isLoading } = useQuery<Book[]>({
+    queryKey: ["books", "search", debounced, genre],
+    queryFn: () => api.books.search(debounced, genre === "All" ? "" : genre),
+    enabled: debounced.length > 1,
+  });
+
+  const filtered = useMemo(() => {
+    if (debounced.length > 1 && searchResults) return searchResults;
+    return fallbackBooks.filter(
+      (b) =>
+        (genre === "All" || b.genre.includes(genre)) &&
+        (debounced === "" ||
+          b.title.toLowerCase().includes(debounced.toLowerCase()) ||
+          b.author.toLowerCase().includes(debounced.toLowerCase())),
+    );
+  }, [debounced, genre, searchResults]);
+
+  const showSkeletons = isLoading && debounced.length > 1;
 
   return (
     <AppShell>
@@ -51,7 +65,7 @@ function DiscoverPage() {
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search titles or authors"
             aria-label="Search books"
-            className="w-full pl-11 pr-4 py-3 rounded-full bg-muted text-sm font-body placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-gold/50"
+            className="w-full pl-11 pr-4 py-3 rounded-md bg-muted text-sm font-body placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-gold/50"
           />
         </div>
       </div>
@@ -63,7 +77,7 @@ function DiscoverPage() {
               key={g}
               onClick={() => setGenre(g)}
               aria-pressed={genre === g}
-              className={`shrink-0 px-3.5 py-1.5 rounded-full font-mono text-[11px] uppercase tracking-wider transition-colors ${
+              className={`shrink-0 px-3.5 py-1.5 rounded-md font-mono text-[11px] uppercase tracking-wider transition-colors ${
                 genre === g
                   ? "bg-primary text-primary-foreground"
                   : "border border-divider text-muted-foreground"
@@ -75,11 +89,8 @@ function DiscoverPage() {
         </div>
       </div>
 
-      <motion.div
-        layout
-        className="grid grid-cols-2 gap-x-3 gap-y-6 px-5 mt-6"
-      >
-        {loading
+      <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-3 gap-y-6 px-5 mt-6">
+        {showSkeletons
           ? Array.from({ length: 6 }).map((_, i) => <BookCardSkeleton key={i} />)
           : filtered.map((b) => (
               <div key={b.id} className="mx-auto">
@@ -88,7 +99,7 @@ function DiscoverPage() {
             ))}
       </motion.div>
 
-      {!loading && filtered.length === 0 && (
+      {!showSkeletons && filtered.length === 0 && (
         <p className="px-5 mt-10 text-center text-sm text-muted-foreground">
           No books match your search.
         </p>
