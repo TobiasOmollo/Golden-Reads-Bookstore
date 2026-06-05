@@ -56,6 +56,8 @@ function LoginPage() {
           className="mt-10 space-y-4"
         >
           <Field
+            id="email"
+            name="email"
             label="Email"
             type="email"
             value={email}
@@ -64,6 +66,8 @@ function LoginPage() {
             invalid={shake && !email.includes("@")}
           />
           <Field
+            id="password"
+            name="password"
             label="Password"
             type={show ? "text" : "password"}
             value={pw}
@@ -84,7 +88,12 @@ function LoginPage() {
 
           <div className="flex items-center justify-between text-xs">
             <label className="flex items-center gap-2 text-muted-foreground">
-              <input type="checkbox" className="rounded accent-[color:var(--color-gold)]" />
+              <input
+                id="rememberMe"
+                name="rememberMe"
+                type="checkbox"
+                className="rounded accent-[color:var(--color-gold)]"
+              />
               Remember me
             </label>
             <a href="#" className="text-gold font-mono uppercase tracking-wider text-[10px]">
@@ -136,6 +145,8 @@ function Field({
   trailing,
   invalid,
   autoComplete,
+  id,
+  name,
 }: {
   label: string;
   type: string;
@@ -144,6 +155,8 @@ function Field({
   trailing?: React.ReactNode;
   invalid?: boolean;
   autoComplete?: string;
+  id?: string;
+  name?: string;
 }) {
   return (
     <label className="block">
@@ -156,6 +169,8 @@ function Field({
         }`}
       >
         <input
+          id={id}
+          name={name}
           type={type}
           value={value}
           onChange={(e) => onChange(e.target.value)}

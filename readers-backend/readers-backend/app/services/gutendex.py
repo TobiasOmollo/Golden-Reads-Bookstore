@@ -5,12 +5,30 @@ from typing import Dict, List, Optional, Tuple
 from app.constants.genre_map import GENRE_MAP
 from app.models.schemas import Book
 
+def _cover(book_data: dict) -> str:
+    gid = book_data.get('id', 0)
+
+    # TIER 1: Gutendex sometimes provides subjects with OLID hints
+    # Look for an Open Library link in book_links or formats
+    for fmt_key in book_data.get('formats', {}):
+        if 'openlibrary' in fmt_key:
+            olid = fmt_key.split('/')[-1].split('.')[0]
+            if olid:
+                return f'https://covers.openlibrary.org/b/olid/{olid}-L.jpg?default=false'
+
+    # TIER 2: Try Open Library's /works endpoint via Gutendex ID
+    # Gutendex IDs map to Open Library Work IDs with OL prefix + W suffix
+    # e.g. Gutendex ID 1342 -> try OL1342W
+    if gid:
+        return f'https://covers.openlibrary.org/b/olid/OL{gid}W-L.jpg?default=false'
+
+    # TIER 3: picsum fallback (always works, seeded = consistent per book)
+    return f'https://picsum.photos/seed/book{gid}/200/300'
+
 class GutendexService:
     def __init__(self):
         # Cache for search & trending queries: { cache_key: (data, expiry_timestamp) }
         self._cache: Dict[str, Tuple[any, float]] = {}
-        # Cache for cover lookups: { gutenberg_id: cover_url }
-        self._cover_cache: Dict[int, str] = {}
         self.ttl = 3600  # 1 hour in seconds
         self.base_url = "https://gutendex.com/books"
 
@@ -39,68 +57,7 @@ class GutendexService:
         return list(mapped)
 
     async def _resolve_cover_url(self, client: httpx.AsyncClient, gutendex_id: int, title: str, author: str) -> str:
-        if gutendex_id in self._cover_cache:
-            return self._cover_cache[gutendex_id]
-
-        try:
-            # 1. Search Open Library by Gutenberg ID
-            ol_search_url = f"https://openlibrary.org/search.json?q=id:{gutendex_id}"
-            resp = await client.get(ol_search_url, timeout=3.0)
-            cover_url = None
-            if resp.status_code == 200:
-                results = resp.json()
-                docs = results.get("docs", [])
-                if docs:
-                    doc = docs[0]
-                    # Check for cover_i
-                    cover_i = doc.get("cover_i")
-                    if cover_i:
-                        cover_url = f"https://covers.openlibrary.org/b/id/{cover_i}-L.jpg"
-                    else:
-                        # Check cover_edition_key (OLID)
-                        olid = doc.get("cover_edition_key")
-                        if olid:
-                            cover_url = f"https://covers.openlibrary.org/b/olid/{olid}-L.jpg"
-                        else:
-                            # Check ISBN
-                            isbns = doc.get("isbn", [])
-                            if isbns:
-                                cover_url = f"https://covers.openlibrary.org/b/isbn/{isbns[0]}-L.jpg"
-
-            # 2. Fallback to searching by Title + Author if Gutenberg ID lookup yielded nothing
-            if not cover_url:
-                author_query = author.split(",")[0] if "," in author else author
-                search_query = f"{title} {author_query}".strip()
-                ol_text_url = f"https://openlibrary.org/search.json?q={search_query}&limit=1"
-                resp = await client.get(ol_text_url, timeout=3.0)
-                if resp.status_code == 200:
-                    results = resp.json()
-                    docs = results.get("docs", [])
-                    if docs:
-                        doc = docs[0]
-                        cover_i = doc.get("cover_i")
-                        if cover_i:
-                            cover_url = f"https://covers.openlibrary.org/b/id/{cover_i}-L.jpg"
-                        else:
-                            olid = doc.get("cover_edition_key")
-                            if olid:
-                                cover_url = f"https://covers.openlibrary.org/b/olid/{olid}-L.jpg"
-                            else:
-                                isbns = doc.get("isbn", [])
-                                if isbns:
-                                    cover_url = f"https://covers.openlibrary.org/b/isbn/{isbns[0]}-L.jpg"
-
-            if cover_url:
-                self._cover_cache[gutendex_id] = cover_url
-                return cover_url
-
-        except Exception:
-            pass  # Suppress and hit fallback
-
-        # 3. Last fallback: Picsum with seeded Gutenberg ID
-        fallback_url = f"https://picsum.photos/seed/{gutendex_id}/200/300"
-        self._cover_cache[gutendex_id] = fallback_url
-        return fallback_url
+        return _cover({"id": gutendex_id})
 
     def _convert_to_book(self, item: dict, cover_url: str) -> Book:
         authors = item.get("authors", [])
@@ -128,7 +85,6 @@ class GutendexService:
 
         subjects = item.get("subjects", [])
         genres = self._map_genres(subjects)
-        download_count = item.get("download_count", 0)
 
         # Estimate pages based on Gutenberg download counts and arbitrary text length
         pages = max(100, int((gid % 400) + 120))
@@ -143,7 +99,7 @@ class GutendexService:
         description = ", ".join(subjects) if subjects else f"A classic book of the genre {', '.join(genres)}."
 
         return Book(
-            id=str(gid),
+            id=f"g{gid}",
             title=item.get("title", "Untitled Book"),
             author=author_name,
             cover=cover_url,
@@ -179,22 +135,14 @@ class GutendexService:
                     return []
                 results_json = resp.json().get("results", [])
                 
-                # Resolve cover art simultaneously for performance
                 books = []
-                tasks = []
                 for item in results_json:
-                    author_list = item.get("authors", [])
-                    author_name = author_list[0].get("name", "") if author_list else ""
-                    tasks.append(self._resolve_cover_url(client, item.get("id"), item.get("title", ""), author_name))
-                
-                covers = await asyncio.gather(*tasks)
-                for item, cover_url in zip(results_json, covers):
+                    cover_url = _cover(item)
                     books.append(self._convert_to_book(item, cover_url))
 
                 self._set_in_cache(cache_key, books)
                 return books
-            except Exception as e:
-                # Fallback to an empty list on error
+            except Exception:
                 return []
 
     async def get_trending_books(self) -> List[Book]:
@@ -212,14 +160,8 @@ class GutendexService:
                 results_json = resp.json().get("results", [])[:20]
 
                 books = []
-                tasks = []
                 for item in results_json:
-                    author_list = item.get("authors", [])
-                    author_name = author_list[0].get("name", "") if author_list else ""
-                    tasks.append(self._resolve_cover_url(client, item.get("id"), item.get("title", ""), author_name))
-                
-                covers = await asyncio.gather(*tasks)
-                for item, cover_url in zip(results_json, covers):
+                    cover_url = _cover(item)
                     books.append(self._convert_to_book(item, cover_url))
 
                 self._set_in_cache(cache_key, books)
@@ -240,9 +182,7 @@ class GutendexService:
                 if resp.status_code != 200:
                     return None
                 item = resp.json()
-                author_list = item.get("authors", [])
-                author_name = author_list[0].get("name", "") if author_list else ""
-                cover_url = await self._resolve_cover_url(client, gutendex_id, item.get("title", ""), author_name)
+                cover_url = _cover(item)
                 book = self._convert_to_book(item, cover_url)
                 self._set_in_cache(cache_key, book)
                 return book

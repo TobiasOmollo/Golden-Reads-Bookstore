@@ -25,16 +25,28 @@ async def get_trending():
         raise HTTPException(status_code=500, detail=f"Failed to get trending: {str(e)}")
 
 @router.get("/{id}", response_model=Book)
-async def get_book_by_id(id: int):
-    book = await gutendex_service.get_book_by_id(id)
+async def get_book_by_id(id: str):
+    numeric_id = id[1:] if id.startswith("g") else id
+    try:
+        gutenberg_id = int(numeric_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid book ID format.")
+    
+    book = await gutendex_service.get_book_by_id(gutenberg_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found in Gutenberg Repository.")
     return book
 
 @router.get("/{id}/cover")
-async def proxy_cover(id: int):
-    book = await gutendex_service.get_book_by_id(id)
-    cover_url = book.cover if book else f"https://picsum.photos/seed/book_{id}/200/300"
+async def proxy_cover(id: str):
+    numeric_id = id[1:] if id.startswith("g") else id
+    try:
+        gutenberg_id = int(numeric_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid book ID format.")
+    
+    book = await gutendex_service.get_book_by_id(gutenberg_id)
+    cover_url = book.cover if book else f"https://picsum.photos/seed/book_{gutenberg_id}/200/300"
     
     async with httpx.AsyncClient() as client:
         try:
@@ -52,7 +64,7 @@ async def proxy_cover(id: int):
     # Redirect or stream absolute fallback picsum
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get(f"https://picsum.photos/seed/book_{id}/200/300")
+            resp = await client.get(f"https://picsum.photos/seed/book_{gutenberg_id}/200/300")
             return Response(content=resp.content, media_type="image/jpeg")
         except Exception:
             raise HTTPException(status_code=502, detail="Failed to fetch book cover image assets.")

@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star } from "lucide-react";
 import type { Book } from "@/types/api";
+import { resolveCover } from "@/lib/utils";
 
 export function HeroCarousel({ books }: { books: Book[] }) {
   const [index, setIndex] = useState(0);
@@ -26,7 +27,16 @@ export function HeroCarousel({ books }: { books: Book[] }) {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="absolute inset-0"
           >
-            <img src={book.cover} alt="" className="w-full h-full object-cover" />
+            <img
+              src={resolveCover(book)}
+              alt={book.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const seed = book.id ?? 'fallback';
+                (e.target as HTMLImageElement).onerror = null;
+                (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/400/600`;
+              }}
+            />
             <div className="absolute inset-0 scrim-bottom" />
           </motion.div>
         </AnimatePresence>

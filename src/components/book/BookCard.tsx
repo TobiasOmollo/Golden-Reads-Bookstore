@@ -4,11 +4,10 @@ import { motion } from "framer-motion";
 import type { Book } from "@/types/api";
 import { useCart } from "@/store/cart";
 import { formatKES } from "@/lib/format";
-import { api } from "@/lib/api/client";
+import { resolveCover } from "@/lib/utils";
 
 export function BookCard({ book }: { book: Book }) {
   const add = useCart((s) => s.add);
-  const resolvedCover = api.books.coverUrl(book.id, book.gutendexId || book.librivoxId);
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -24,12 +23,15 @@ export function BookCard({ book }: { book: Book }) {
       >
         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted shadow-card">
           <img
-            src={resolvedCover}
-            alt=""
+            src={resolveCover(book)}
+            alt={book.title}
             loading="lazy"
             className="w-full h-full object-cover group-active:scale-[0.98] transition-transform"
             onError={(e) => {
-              e.currentTarget.src = "/placeholder-cover.jpg";
+              // If any URL fails, fall back to a reliable picsum image
+              const seed = book.id ?? 'fallback';
+              (e.target as HTMLImageElement).onerror = null; // prevent infinite loop
+              (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/200/300`;
             }}
           />
           <button

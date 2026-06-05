@@ -4,6 +4,7 @@ import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { useCart } from "@/store/cart";
 import { formatKES } from "@/lib/format";
+import { resolveCover } from "@/lib/utils";
 
 export function CartDrawer() {
   const { items, isOpen, close, setQty, remove, subtotal } = useCart();
@@ -71,9 +72,14 @@ export function CartDrawer() {
                   {items.map(({ book, qty }) => (
                     <li key={book.id} className="flex gap-3">
                       <img
-                        src={book.cover}
-                        alt=""
+                        src={resolveCover(book)}
+                        alt={book.title}
                         className="w-14 h-20 object-cover rounded-lg bg-muted shrink-0"
+                        onError={(e) => {
+                          const seed = book.id ?? 'fallback';
+                          (e.target as HTMLImageElement).onerror = null;
+                          (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/200/300`;
+                        }}
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-semibold text-sm line-clamp-1">{book.title}</p>

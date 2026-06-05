@@ -11,6 +11,7 @@ import { useWishlist } from "@/store/wishlist";
 import { useLibrary } from "@/store/library";
 import { formatKES } from "@/lib/format";
 import { api } from "@/lib/api/client";
+import { resolveCover } from "@/lib/utils";
 import booksData from "@/data/books.json";
 import type { Book } from "@/types";
 
@@ -60,7 +61,6 @@ function BookDetail() {
     );
   }
 
-  const coverSrc = book.cover?.startsWith("http") ? book.cover : api.books.coverUrl(book.id);
   const similar = books.filter((b) => b.id !== book.id && b.genre.some((g) => book.genre.includes(g))).slice(0, 8);
 
   return (
@@ -72,7 +72,16 @@ function BookDetail() {
           transition={{ duration: 0.4 }}
           className="relative w-full h-[60vw] max-h-[420px] bg-muted overflow-hidden"
         >
-          <img src={coverSrc} alt="" className="w-full h-full object-cover" />
+          <img
+            src={resolveCover(book)}
+            alt={book.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              const seed = book.id ?? 'fallback';
+              (e.target as HTMLImageElement).onerror = null;
+              (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/400/600`;
+            }}
+          />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-background" />
           <button
             aria-label="Go back"

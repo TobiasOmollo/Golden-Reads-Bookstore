@@ -12,7 +12,14 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        import json
+        raw = self.CORS_ORIGINS.strip()
+        if raw.startswith("[") and raw.endswith("]"):
+            try:
+                return json.loads(raw)
+            except Exception:
+                pass
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
     # Pydantic v2 configuration for loading env file
     model_config = SettingsConfigDict(

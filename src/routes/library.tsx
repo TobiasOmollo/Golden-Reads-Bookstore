@@ -5,6 +5,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { useLibrary } from "@/store/library";
 import booksData from "@/data/books.json";
 import type { Book } from "@/types/api";
+import { resolveCover } from "@/lib/utils";
 
 const books = booksData as Book[];
 
@@ -93,7 +94,16 @@ function LibraryPage() {
               params={{ id: book.id }}
               className="flex items-center gap-3 px-5 py-3.5 active:bg-muted/50"
             >
-              <img src={book.cover} alt="" className="w-14 h-20 rounded-lg object-cover bg-muted shrink-0" />
+              <img
+                src={resolveCover(book)}
+                alt={book.title}
+                className="w-14 h-20 rounded-lg object-cover bg-muted shrink-0"
+                onError={(e) => {
+                  const seed = book.id ?? 'fallback';
+                  (e.target as HTMLImageElement).onerror = null;
+                  (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/200/300`;
+                }}
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-sm line-clamp-1">{book.title}</p>
                 <p className="text-xs text-muted-foreground line-clamp-1">{book.author}</p>

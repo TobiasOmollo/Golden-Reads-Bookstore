@@ -1,367 +1,282 @@
 [
   {
-    "id": "001",
-    "title": "The Midnight Library",
-    "author": "Matt Haig",
-    "cover": "https://picsum.photos/seed/gr001/400/600",
-    "rating": 4.2,
+    "id": "g1342",
+    "gutendexId": 1342,
+    "title": "Pride and Prejudice",
+    "author": "Jane Austen",
+    "cover": "https://covers.openlibrary.org/b/olid/OL1342W-L.jpg",
+    "rating": 4.8,
     "price": 550,
-    "genre": [
-      "Fiction",
-      "Self-Help"
-    ],
-    "description": "The Midnight Library by Matt Haig is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about fiction titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 234,
+    "genre": ["Fiction", "Romance"],
+    "description": "Austen's classic romantic novel focusing on Elizabeth Bennet.",
+    "pages": 352,
     "readingTime": "5h 5m",
-    "formats": [
-      "epub",
-      "audio"
-    ]
+    "formats": ["epub", "audio"]
   },
   {
-    "id": "002",
-    "title": "Atomic Habits",
-    "author": "James Clear",
-    "cover": "https://picsum.photos/seed/gr002/400/600",
-    "rating": 4.2,
-    "price": 1200,
-    "genre": [
-      "Self-Help",
-      "Business"
-    ],
-    "description": "Atomic Habits by James Clear is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about self-help titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 529,
-    "readingTime": "11h 18m",
-    "formats": [
-      "epub"
-    ]
-  },
-  {
-    "id": "003",
-    "title": "Project Hail Mary",
-    "author": "Andy Weir",
-    "cover": "https://picsum.photos/seed/gr003/400/600",
+    "id": "g11",
+    "gutendexId": 11,
+    "title": "Alice in Wonderland",
+    "author": "Lewis Carroll",
+    "cover": "https://covers.openlibrary.org/b/olid/OL11W-L.jpg",
     "rating": 4.5,
-    "price": 1650,
-    "genre": [
-      "Science",
-      "Fiction"
-    ],
-    "description": "Project Hail Mary by Andy Weir is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about science titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 425,
-    "readingTime": "6h 0m",
-    "formats": [
-      "epub",
-      "audio"
-    ]
+    "price": 1200,
+    "genre": ["Fantasy", "Fiction"],
+    "description": "Carroll's famous fantasy story of Alice following the White Rabbit.",
+    "pages": 192,
+    "readingTime": "11h 18m",
+    "formats": ["epub"]
   },
   {
-    "id": "004",
-    "title": "The Silent Patient",
-    "author": "Alex Michaelides",
-    "cover": "https://picsum.photos/seed/gr004/400/600",
-    "rating": 3.9,
+    "id": "g84",
+    "gutendexId": 84,
+    "title": "Frankenstein",
+    "author": "Mary Shelley",
+    "cover": "https://covers.openlibrary.org/b/olid/OL84W-L.jpg",
+    "rating": 4.3,
+    "price": 1650,
+    "genre": ["Fiction", "Science"],
+    "description": "Mary Shelley's classic tale of creation and horror.",
+    "pages": 280,
+    "readingTime": "6h 0m",
+    "formats": ["epub", "audio"]
+  },
+  {
+    "id": "g1080",
+    "gutendexId": 1080,
+    "title": "A Tale of Two Cities",
+    "author": "Charles Dickens",
+    "cover": "https://covers.openlibrary.org/b/olid/OL1080W-L.jpg",
+    "rating": 4.2,
     "price": 1400,
-    "genre": [
-      "Thriller",
-      "Mystery"
-    ],
-    "description": "The Silent Patient by Alex Michaelides is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about thriller titles of the decade. Immerse yourself in a story that lingers long after the final page.",
+    "genre": ["Thriller", "Mystery"],
+    "description": "A story set in London and Paris before and during the French Revolution.",
     "pages": 370,
     "readingTime": "10h 18m",
-    "formats": [
-      "epub",
-      "audio"
-    ]
+    "formats": ["epub", "audio"]
   },
   {
-    "id": "005",
-    "title": "Dune",
-    "author": "Frank Herbert",
-    "cover": "https://picsum.photos/seed/gr005/400/600",
+    "id": "g98",
+    "gutendexId": 98,
+    "title": "A Christmas Carol",
+    "author": "Charles Dickens",
+    "cover": "https://covers.openlibrary.org/b/olid/OL98W-L.jpg",
     "rating": 4.6,
     "price": 700,
-    "genre": [
-      "Fantasy",
-      "Fiction"
-    ],
-    "description": "Dune by Frank Herbert is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about fantasy titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 547,
+    "genre": ["Fantasy", "Fiction"],
+    "description": "The timeless story of Ebenezer Scrooge's redemption on Christmas Eve.",
+    "pages": 156,
     "readingTime": "10h 5m",
-    "formats": [
-      "epub",
-      "audio"
-    ]
+    "formats": ["epub", "audio"]
   },
   {
-    "id": "006",
-    "title": "Sapiens",
-    "author": "Yuval Noah Harari",
-    "cover": "https://picsum.photos/seed/gr006/400/600",
-    "rating": 4.6,
+    "id": "g174",
+    "gutendexId": 174,
+    "title": "The Picture of Dorian Gray",
+    "author": "Oscar Wilde",
+    "cover": "https://covers.openlibrary.org/b/olid/OL174W-L.jpg",
+    "rating": 4.4,
     "price": 1000,
-    "genre": [
-      "Science",
-      "Biography"
-    ],
-    "description": "Sapiens by Yuval Noah Harari is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about science titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 333,
+    "genre": ["Science", "Biography"],
+    "description": "The philosophical tale of a man whose portrait ages instead of him.",
+    "pages": 254,
     "readingTime": "9h 28m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "007",
-    "title": "The Pragmatic Programmer",
-    "author": "Andy Hunt",
-    "cover": "https://picsum.photos/seed/gr007/400/600",
+    "id": "g2701",
+    "gutendexId": 2701,
+    "title": "Moby Dick",
+    "author": "Herman Melville",
+    "cover": "https://covers.openlibrary.org/b/olid/OL2701W-L.jpg",
+    "rating": 4.1,
+    "price": 1500,
+    "genre": ["Technology", "Business"],
+    "description": "Melville's epic hunt for the legendary white whale.",
+    "pages": 585,
+    "readingTime": "5h 5m",
+    "formats": ["epub", "audio"]
+  },
+  {
+    "id": "g76",
+    "gutendexId": 76,
+    "title": "The Adventures of Tom Sawyer",
+    "author": "Mark Twain",
+    "cover": "https://covers.openlibrary.org/b/olid/OL76W-L.jpg",
     "rating": 4.5,
     "price": 1500,
-    "genre": [
-      "Technology",
-      "Business"
-    ],
-    "description": "The Pragmatic Programmer by Andy Hunt is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about technology titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 202,
-    "readingTime": "5h 5m",
-    "formats": [
-      "epub",
-      "audio"
-    ]
-  },
-  {
-    "id": "008",
-    "title": "Educated",
-    "author": "Tara Westover",
-    "cover": "https://picsum.photos/seed/gr008/400/600",
-    "rating": 4.3,
-    "price": 1500,
-    "genre": [
-      "Biography",
-      "Self-Help"
-    ],
-    "description": "Educated by Tara Westover is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about biography titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 523,
+    "genre": ["Biography", "Self-Help"],
+    "description": "Twain's beloved novel of childhood adventure along the Mississippi.",
+    "pages": 240,
     "readingTime": "9h 29m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "009",
-    "title": "Where the Crawdads Sing",
-    "author": "Delia Owens",
-    "cover": "https://picsum.photos/seed/gr009/400/600",
-    "rating": 4.4,
+    "id": "g1661",
+    "gutendexId": 1661,
+    "title": "The Adventures of Sherlock Holmes",
+    "author": "Arthur Conan Doyle",
+    "cover": "https://covers.openlibrary.org/b/olid/OL1661W-L.jpg",
+    "rating": 4.7,
     "price": 1700,
-    "genre": [
-      "Fiction",
-      "Mystery"
-    ],
-    "description": "Where the Crawdads Sing by Delia Owens is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about fiction titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 471,
+    "genre": ["Fiction", "Mystery"],
+    "description": "Doyle's classic collection of mystery investigations.",
+    "pages": 312,
     "readingTime": "4h 47m",
-    "formats": [
-      "epub",
-      "audio"
-    ]
+    "formats": ["epub", "audio"]
   },
   {
-    "id": "010",
-    "title": "Becoming",
-    "author": "Michelle Obama",
-    "cover": "https://picsum.photos/seed/gr010/400/600",
-    "rating": 4.8,
+    "id": "g844",
+    "gutendexId": 844,
+    "title": "The Importance of Being Earnest",
+    "author": "Oscar Wilde",
+    "cover": "https://covers.openlibrary.org/b/olid/OL844W-L.jpg",
+    "rating": 4.6,
     "price": 1350,
-    "genre": [
-      "Biography"
-    ],
-    "description": "Becoming by Michelle Obama is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about biography titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 467,
+    "genre": ["Biography"],
+    "description": "Wilde's famous comedy of manners and identity mix-ups.",
+    "pages": 120,
     "readingTime": "7h 59m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "011",
-    "title": "The Psychology of Money",
-    "author": "Morgan Housel",
-    "cover": "https://picsum.photos/seed/gr011/400/600",
-    "rating": 4.3,
+    "id": "g2542",
+    "gutendexId": 2542,
+    "title": "A Doll's House",
+    "author": "Henrik Ibsen",
+    "cover": "https://covers.openlibrary.org/b/olid/OL2542W-L.jpg",
+    "rating": 4.2,
     "price": 650,
-    "genre": [
-      "Business",
-      "Self-Help"
-    ],
-    "description": "The Psychology of Money by Morgan Housel is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about business titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 301,
+    "genre": ["Business", "Self-Help"],
+    "description": "Ibsen's landmark drama about marriage and self-discovery.",
+    "pages": 140,
     "readingTime": "5h 12m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "012",
-    "title": "Klara and the Sun",
-    "author": "Kazuo Ishiguro",
-    "cover": "https://picsum.photos/seed/gr012/400/600",
-    "rating": 3.8,
+    "id": "g5200",
+    "gutendexId": 5200,
+    "title": "Metamorphosis",
+    "author": "Franz Kafka",
+    "cover": "https://covers.openlibrary.org/b/olid/OL5200W-L.jpg",
+    "rating": 4.3,
     "price": 750,
-    "genre": [
-      "Fiction",
-      "Science"
-    ],
-    "description": "Klara and the Sun by Kazuo Ishiguro is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about fiction titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 463,
+    "genre": ["Fiction", "Science"],
+    "description": "Kafka's masterpiece of surrealism and existential dread.",
+    "pages": 100,
     "readingTime": "11h 43m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "013",
-    "title": "The Seven Husbands of Evelyn Hugo",
-    "author": "Taylor Jenkins Reid",
-    "cover": "https://picsum.photos/seed/gr013/400/600",
-    "rating": 4.4,
+    "id": "g4300",
+    "gutendexId": 4300,
+    "title": "Ulysses",
+    "author": "James Joyce",
+    "cover": "https://covers.openlibrary.org/b/olid/OL4300W-L.jpg",
+    "rating": 3.9,
     "price": 450,
-    "genre": [
-      "Romance",
-      "Fiction"
-    ],
-    "description": "The Seven Husbands of Evelyn Hugo by Taylor Jenkins Reid is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about romance titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 505,
+    "genre": ["Romance", "Fiction"],
+    "description": "Joyce's complex exploration of Leopold Bloom's day in Dublin.",
+    "pages": 732,
     "readingTime": "6h 57m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "014",
-    "title": "Clean Code",
-    "author": "Robert C. Martin",
-    "cover": "https://picsum.photos/seed/gr014/400/600",
-    "rating": 4.1,
+    "id": "g16",
+    "gutendexId": 16,
+    "title": "Peter Pan",
+    "author": "J.M. Barrie",
+    "cover": "https://covers.openlibrary.org/b/olid/OL16W-L.jpg",
+    "rating": 4.5,
     "price": 750,
-    "genre": [
-      "Technology"
-    ],
-    "description": "Clean Code by Robert C. Martin is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about technology titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 370,
+    "genre": ["Technology"],
+    "description": "Barrie's classic adventure of the boy who wouldn't grow up.",
+    "pages": 180,
     "readingTime": "10h 52m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "015",
-    "title": "The Thursday Murder Club",
-    "author": "Richard Osman",
-    "cover": "https://picsum.photos/seed/gr015/400/600",
-    "rating": 4.1,
-    "price": 1750,
-    "genre": [
-      "Mystery",
-      "Fiction"
-    ],
-    "description": "The Thursday Murder Club by Richard Osman is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about mystery titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 513,
-    "readingTime": "8h 55m",
-    "formats": [
-      "epub"
-    ]
-  },
-  {
-    "id": "016",
-    "title": "Thinking, Fast and Slow",
-    "author": "Daniel Kahneman",
-    "cover": "https://picsum.photos/seed/gr016/400/600",
-    "rating": 3.9,
-    "price": 950,
-    "genre": [
-      "Science",
-      "Business"
-    ],
-    "description": "Thinking, Fast and Slow by Daniel Kahneman is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about science titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 548,
-    "readingTime": "5h 38m",
-    "formats": [
-      "epub",
-      "audio"
-    ]
-  },
-  {
-    "id": "017",
-    "title": "The Song of Achilles",
-    "author": "Madeline Miller",
-    "cover": "https://picsum.photos/seed/gr017/400/600",
+    "id": "g1952",
+    "gutendexId": 1952,
+    "title": "The Yellow Wallpaper",
+    "author": "Charlotte Perkins Gilman",
+    "cover": "https://covers.openlibrary.org/b/olid/OL1952W-L.jpg",
     "rating": 4.4,
+    "price": 1750,
+    "genre": ["Mystery", "Fiction"],
+    "description": "Gilman's haunting story of mental health and isolation.",
+    "pages": 80,
+    "readingTime": "8h 55m",
+    "formats": ["epub"]
+  },
+  {
+    "id": "g514",
+    "gutendexId": 514,
+    "title": "Little Women",
+    "author": "Louisa May Alcott",
+    "cover": "https://covers.openlibrary.org/b/olid/OL514W-L.jpg",
+    "rating": 4.7,
+    "price": 950,
+    "genre": ["Science", "Business"],
+    "description": "Alcott's beloved story of the March sisters growing up.",
+    "pages": 480,
+    "readingTime": "5h 38m",
+    "formats": ["epub", "audio"]
+  },
+  {
+    "id": "g1400",
+    "gutendexId": 1400,
+    "title": "Great Expectations",
+    "author": "Charles Dickens",
+    "cover": "https://covers.openlibrary.org/b/olid/OL1400W-L.jpg",
+    "rating": 4.5,
     "price": 1500,
-    "genre": [
-      "Romance",
-      "Fantasy"
-    ],
-    "description": "The Song of Achilles by Madeline Miller is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about romance titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 359,
+    "genre": ["Romance", "Fantasy"],
+    "description": "The growth and personal development of Pip, an orphan.",
+    "pages": 505,
     "readingTime": "10h 1m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "018",
-    "title": "Designing Data-Intensive Applications",
-    "author": "Martin Kleppmann",
-    "cover": "https://picsum.photos/seed/gr018/400/600",
-    "rating": 4.8,
+    "id": "g2591",
+    "gutendexId": 2591,
+    "title": "Grimms' Fairy Tales",
+    "author": "Jacob Grimm and Wilhelm Grimm",
+    "cover": "https://covers.openlibrary.org/b/olid/OL2591W-L.jpg",
+    "rating": 4.6,
     "price": 1450,
-    "genre": [
-      "Technology"
-    ],
-    "description": "Designing Data-Intensive Applications by Martin Kleppmann is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about technology titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 232,
+    "genre": ["Technology"],
+    "description": "The classic collection of German folk stories.",
+    "pages": 320,
     "readingTime": "5h 30m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "019",
-    "title": "The Da Vinci Code",
-    "author": "Dan Brown",
-    "cover": "https://picsum.photos/seed/gr019/400/600",
-    "rating": 3.9,
+    "id": "g345",
+    "gutendexId": 345,
+    "title": "Dracula",
+    "author": "Bram Stoker",
+    "cover": "https://covers.openlibrary.org/b/olid/OL345W-L.jpg",
+    "rating": 4.6,
     "price": 1350,
-    "genre": [
-      "Thriller",
-      "Mystery"
-    ],
-    "description": "The Da Vinci Code by Dan Brown is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about thriller titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 271,
+    "genre": ["Thriller", "Mystery"],
+    "description": "Stoker's gothic horror masterpiece introducing Count Dracula.",
+    "pages": 416,
     "readingTime": "8h 11m",
-    "formats": [
-      "epub"
-    ]
+    "formats": ["epub"]
   },
   {
-    "id": "020",
-    "title": "Verity",
-    "author": "Colleen Hoover",
-    "cover": "https://picsum.photos/seed/gr020/400/600",
-    "rating": 4.9,
+    "id": "g43",
+    "gutendexId": 43,
+    "title": "The Strange Case of Dr. Jekyll and Mr. Hyde",
+    "author": "Robert Louis Stevenson",
+    "cover": "https://covers.openlibrary.org/b/olid/OL43W-L.jpg",
+    "rating": 4.4,
     "price": 400,
-    "genre": [
-      "Thriller",
-      "Romance"
-    ],
-    "description": "Verity by Colleen Hoover is a captivating work that explores profound themes through unforgettable characters. Praised by critics and readers alike, it has earned a place among the most talked-about thriller titles of the decade. Immerse yourself in a story that lingers long after the final page.",
-    "pages": 220,
+    "genre": ["Thriller", "Romance"],
+    "description": "Stevenson's classic psychological tale of dual personalities.",
+    "pages": 120,
     "readingTime": "4h 25m",
-    "formats": [
-      "epub",
-      "audio"
-    ]
+    "formats": ["epub", "audio"]
   }
 ]
