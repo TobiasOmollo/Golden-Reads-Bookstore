@@ -2,7 +2,7 @@ import { r as reactExports, j as jsxRuntimeExports } from "../_libs/react.mjs";
 import { d as useNavigate, L as Link } from "../_libs/tanstack__react-router.mjs";
 import { W as Wordmark } from "./Logo-BC9wrmwd.mjs";
 import { m as motion } from "../_libs/framer-motion.mjs";
-import { E as EyeOff, d as Eye } from "../_libs/lucide-react.mjs";
+import { E as EyeOff, c as Eye } from "../_libs/lucide-react.mjs";
 import "../_libs/tanstack__router-core.mjs";
 import "../_libs/tanstack__history.mjs";
 import "../_libs/cookie-es.mjs";

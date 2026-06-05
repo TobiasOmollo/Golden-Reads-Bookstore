@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/store/theme";
 import { TopBar } from "./TopBar";
+import { BottomNav } from "./BottomNav";
 import { CartDrawer } from "@/components/CartDrawer";
 
 export function AppShell({
@@ -29,7 +30,12 @@ export function AppShell({
       >
         {children}
       </motion.main>
+      <footer className="text-muted-foreground text-xs tracking-wide border-t border-border py-4 mt-auto text-center w-full">
+        © 2026 TitanWeb Production. All rights reserved.
+      </footer>
+      {showBottomNav && <BottomNav />}
       <CartDrawer />
     </div>
   );
 }
+

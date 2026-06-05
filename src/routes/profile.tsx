@@ -2,10 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ChevronRight, Settings, Award, Bell, Shield, Download, LogOut } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/store/theme";
-import userData from "@/data/user.json";
-import type { User } from "@/types/api";
-
-const user = userData as User;
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -19,6 +16,26 @@ export const Route = createFileRoute("/profile")({
 
 function ProfilePage() {
   const { theme, toggle } = useTheme();
+  const [user, setUser] = useState<{
+    name: string;
+    email: string;
+    avatar?: string;
+    readingGoal?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    const activeSession = localStorage.getItem("golden_reads_user");
+    if (activeSession) {
+      try {
+        setUser(JSON.parse(activeSession));
+      } catch (e) {
+        console.error("Failed to parse user session, resetting", e);
+        setUser({ name: "Guest Reader", email: "guest@goldenreads.com" });
+      }
+    } else {
+      setUser({ name: "Guest Reader", email: "guest@goldenreads.com" });
+    }
+  }, []);
 
   return (
     <AppShell>
@@ -29,17 +46,17 @@ function ProfilePage() {
       <section className="mx-5 mt-4 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-5 shadow-soft">
         <div className="flex items-center gap-4">
           <img
-            src={user.avatar}
+            src={user?.avatar || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"}
             alt=""
             className="w-16 h-16 rounded-full object-cover ring-2 ring-gold/60"
           />
           <div className="flex-1">
-            <p className="font-display text-xl font-semibold">{user.name}</p>
-            <p className="text-xs text-primary-foreground/70">{user.email}</p>
+            <p className="font-display text-xl font-semibold">{user?.name}</p>
+            <p className="text-xs text-primary-foreground/70">{user?.email}</p>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-5">
-          <Mini label="Goal" value={`${user.readingGoal}/yr`} />
+          <Mini label="Goal" value={`${user?.readingGoal || 12}/yr`} />
           <Mini label="Read" value="14" />
           <Mini label="Streak" value="12d" />
         </div>

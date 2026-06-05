@@ -47,14 +47,17 @@ export const api = {
         () => get<Book>(`/books/${id}`), 
         (mockBooks as unknown as Book[]).find(b => b.id === id) || (mockBooks[0] as unknown as Book)
       ),
-    coverUrl: (id: string) => `${BASE}/books/${id}/cover`,
+    coverUrl: (id: string, openLibraryId?: string | number) =>
+      openLibraryId
+        ? `https://covers.openlibrary.org/b/id/${openLibraryId}-L.jpg`
+        : `${BASE}/books/${id}/cover`,
   },
   audio: {
     search: (q: string) => 
-      handleFetchWithFallback<Book[]>(() => get<Book[]>(`/audiobooks/search?q=${encodeURIComponent(q)}`), mockBooks as unknown as Book[]),
+      handleFetchWithFallback<Book[]>(() => get<Book[]>(`/audio/search?q=${encodeURIComponent(q)}`), mockBooks as unknown as Book[]),
     detail: (id: string) => 
       handleFetchWithFallback<Book>(
-        () => get<Book>(`/audiobooks/${id}`),
+        () => get<Book>(`/audio/${id}`),
         (mockBooks as unknown as Book[]).find(b => b.id === id) || (mockBooks[0] as unknown as Book)
       ),
   },
@@ -88,11 +91,30 @@ export const api = {
   },
   ai: {
     summarize: (bookId: string, chapter: string) =>
-      post<{ summary: string }>(`/ai/summarize`, { bookId, chapter }),
-    flashcards: (text: string) => post<Flashcard[]>(`/ai/flashcards`, { text }),
+      handleFetchWithFallback<{ summary: string }>(
+        () => post<{ summary: string }>(`/ai/summarize`, { bookId, chapter }),
+        { summary: "[Offline Fallback] A detailed chapter summary covering the key narrative points of this section of the book." }
+      ),
+    flashcards: (text: string) =>
+      handleFetchWithFallback<Flashcard[]>(
+        () => post<Flashcard[]>(`/ai/flashcards`, { text }),
+        [
+          { front: "Where did Sherlock Holmes live?", back: "221B Baker Street, London" },
+          { front: "What was Holmes primarily famous for?", back: "His incredible power of observation and logical deduction" }
+        ]
+      ),
     recommend: (genres: string[], history: string[]) =>
-      post<Book[]>(`/ai/recommend`, { genres, history }),
+      handleFetchWithFallback<{ recommendations: Book[]; reasoning: string }>(
+        () => post<{ recommendations: Book[]; reasoning: string }>(`/ai/recommend`, { genres, history }),
+        {
+          recommendations: (mockBooks as unknown as Book[]).slice(0, 3),
+          reasoning: "Showing classic book recommendations because the AI recommendation service encountered a limit or error."
+        }
+      ),
     explain: (passage: string, context: string) =>
-      post<{ explanation: string }>(`/ai/explain`, { passage, context }),
+      handleFetchWithFallback<{ explanation: string }>(
+        () => post<{ explanation: string }>(`/ai/explain`, { passage, context }),
+        { explanation: "[Offline Fallback] This text is archaic English representing a unique behavior or rare incident." }
+      ),
   },
 };

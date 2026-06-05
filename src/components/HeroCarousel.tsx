@@ -16,11 +16,11 @@ export function HeroCarousel({ books }: { books: Book[] }) {
 
   return (
     <div className="px-5 mt-2">
-      <div className="relative aspect-[16/10] rounded-2xl overflow-hidden bg-muted shadow-soft">
+      <div className="relative aspect-[16/10] max-h-[340px] rounded-2xl overflow-hidden bg-muted shadow-soft">
         <AnimatePresence mode="wait">
           <motion.div
             key={book.id}
-            initial={{ opacity: 0, scale: 1.04 }}
+            initial={{ opacity: 0, scale: 1 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.6, ease: "easeOut" }}

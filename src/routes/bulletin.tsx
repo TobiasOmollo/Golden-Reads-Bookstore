@@ -1,108 +1,44 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Newspaper } from "lucide-react";
+import { Radio } from "lucide-react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { api } from "@/lib/api/client";
 import type { Article } from "@/types";
-import { z } from "zod";
 
-const magazinesSearchSchema = z.object({
-  tab: z.enum(["eastafrica", "business"]).optional().catch("eastafrica"),
-});
-
-type MagazinesTab = z.infer<typeof magazinesSearchSchema>["tab"];
-
-export const Route = createFileRoute("/magazines")({
-  validateSearch: (search) => magazinesSearchSchema.parse(search),
+export const Route = createFileRoute("/bulletin")({
   head: () => ({
     meta: [
-      { title: "Magazines – Golden Reads" },
-      { name: "description", content: "Stay updated with regional magazines and business publications in East Africa." },
+      { title: "News Bulletin – Golden Reads" },
+      { name: "description", content: "Stay updated with live recurrent news updates and breaking stories from East Africa." },
     ],
   }),
-  component: MagazinesPage,
+  component: BulletinPage,
 });
 
-const categories = [
-  { id: "eastafrica", label: "East Africa", desc: "Regional stories and developments" },
-  { id: "business", label: "Business", desc: "Finance, market trends and economy" },
-] as const;
-
-function MagazinesPage() {
-  const { tab: activeTab = "eastafrica" } = Route.useSearch();
-  const navigate = useNavigate({ from: Route.fullPath });
-
-  const handleTabChange = (tabId: MagazinesTab) => {
-    navigate({
-      search: () => ({ tab: tabId }),
-    });
-  };
-
+function BulletinPage() {
   const { data: articles = [], isLoading } = useQuery<Article[]>({
-    queryKey: ["magazines", activeTab],
-    queryFn: () => {
-      if (activeTab === "eastafrica") return api.magazines.eastAfrica();
-      if (activeTab === "business") return api.magazines.business();
-      return [];
-    },
+    queryKey: ["magazines", "bulletin"],
+    queryFn: () => api.magazines.bulletin(),
   });
-
-  const activeCategory = categories.find((c) => c.id === activeTab) || categories[0];
 
   return (
     <AppShell>
       <div className="px-5 pt-4">
         <h1 className="font-display text-2xl font-semibold flex items-center gap-2.5">
-          <Newspaper className="text-gold" size={26} />
-          Magazines
+          <span className="relative flex h-4 w-4 mr-1">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
+          </span>
+          <Radio className="text-gold" size={26} />
+          News Bulletin
         </h1>
         <p className="text-sm text-muted-foreground mt-0.5">
-          Curated publications and regional journals.
+          Latest headlines and live recurrent news updates.
         </p>
 
-        {/* Categories Tab Bar */}
-        <div className="mt-6 overflow-x-auto no-scrollbar border-b border-divider">
-          <div className="flex gap-2 min-w-max pb-px">
-            {categories.map((c) => {
-              const active = activeTab === c.id;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => handleTabChange(c.id)}
-                  aria-pressed={active}
-                  className={`relative px-4 py-2.5 font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                    active ? "text-gold font-bold" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {c.label}
-                  {active && (
-                    <motion.span
-                      layoutId="activeCategoryLine"
-                      className="absolute bottom-0 left-0 right-0 h-[2px] bg-gold rounded-full"
-                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Tab Description */}
-        <div className="mt-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-sm font-semibold tracking-wide uppercase text-foreground">
-              {activeCategory.label}
-            </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {activeCategory.desc}
-            </p>
-          </div>
-        </div>
-
         {/* Articles List Grid */}
-        <div className="mt-6 min-h-[300px]">
+        <div className="mt-8 min-h-[300px]">
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -120,9 +56,9 @@ function MagazinesPage() {
             </motion.div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <Newspaper size={40} className="text-muted-foreground/30 mb-3" />
+              <Radio size={40} className="text-muted-foreground/30 mb-3 animate-pulse" />
               <p className="text-sm text-muted-foreground">
-                No publications found for this category.
+                No recent bulletin feeds found. Please check back later.
               </p>
             </div>
           )}
@@ -162,7 +98,7 @@ function ArticleCard({ article }: { article: Article }) {
             e.currentTarget.src = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800";
           }}
         />
-        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-background/90 dark:bg-background/80 backdrop-blur-sm text-[9px] font-mono font-semibold tracking-wider text-gold uppercase shadow-sm">
+        <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-red-500 text-white text-[9px] font-mono font-semibold tracking-wider uppercase shadow-sm">
           {article.publication}
         </span>
       </div>

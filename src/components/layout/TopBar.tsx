@@ -9,7 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const navLinks = [
   { to: "/", label: "Home" },
   { to: "/discover", label: "Discover" },
-  { to: "/magazines", label: "Magazines & News" },
+  { to: "/magazines", label: "Magazines" },
+  { to: "/bulletin", label: "News Bulletin" },
   { to: "/library", label: "Library" },
   { to: "/wishlist", label: "Wishlist" },
   { to: "/profile", label: "Profile" },

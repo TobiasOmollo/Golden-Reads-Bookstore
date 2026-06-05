@@ -4,9 +4,11 @@ import { motion } from "framer-motion";
 import type { Book } from "@/types/api";
 import { useCart } from "@/store/cart";
 import { formatKES } from "@/lib/format";
+import { api } from "@/lib/api/client";
 
 export function BookCard({ book }: { book: Book }) {
   const add = useCart((s) => s.add);
+  const resolvedCover = api.books.coverUrl(book.id, book.gutendexId || book.librivoxId);
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -22,10 +24,13 @@ export function BookCard({ book }: { book: Book }) {
       >
         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted shadow-card">
           <img
-            src={book.cover}
+            src={resolvedCover}
             alt=""
             loading="lazy"
             className="w-full h-full object-cover group-active:scale-[0.98] transition-transform"
+            onError={(e) => {
+              e.currentTarget.src = "/placeholder-cover.jpg";
+            }}
           />
           <button
             type="button"

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Sparkles, X, BrainCircuit, MessageSquareText, Layers, ThumbsUp, ChevronRight, HelpCircle, RefreshCw } from "lucide-react";
 import { Flashcard, Book } from "@/types";
+import { api } from "@/lib/api/client";
 
 interface AiAssistantProps {
   onClose: () => void;
@@ -55,25 +56,13 @@ export default function AiAssistant({
     setLoading(true);
     setErrorObj(null);
     try {
-      const resp = await fetch("/ai/summarize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookId: activeBookId, chapter: selectedChapter })
-      });
-      if (resp.headers.get("content-type")?.includes("json")) {
-         const data = await resp.json();
-         if (resp.status === 429 || data.detail === "quota_exceeded") {
-           setErrorObj("Gemini API rate limit exceeded (quota exceeded). Please retry later.");
-         } else if (data.summary) {
-           setSummaries(prev => ({ ...prev, [selectedChapter]: data.summary }));
-         } else {
-           setErrorObj(data.error || "Failed to generate summary.");
-         }
-      } else {
-         setErrorObj("Communication error with server. Please try again.");
+      const data = await api.ai.summarize(activeBookId, selectedChapter);
+      if (data.summary.includes("[Offline Fallback]")) {
+        setErrorObj("Gemini API rate limit exceeded or backend unreachable. Falling back to default summary outline.");
       }
+      setSummaries(prev => ({ ...prev, [selectedChapter]: data.summary }));
     } catch (err: any) {
-      setErrorObj(err.message || "Network error.");
+      setErrorObj(err.message || "Network error occurred.");
     } finally {
       setLoading(false);
     }
@@ -84,24 +73,12 @@ export default function AiAssistant({
     setLoading(true);
     setErrorObj(null);
     try {
-      const resp = await fetch("/ai/flashcards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: flashText })
-      });
-      if (resp.headers.get("content-type")?.includes("json")) {
-        const data = await resp.json();
-        if (resp.status === 429 || data.detail === "quota_exceeded") {
-          setErrorObj("Gemini API limit exceeded (429 quota_exceeded). Falling back to mock card decks.");
-        } else if (Array.isArray(data)) {
-          setDeck(data);
-          setFlippedIndex(null);
-        } else {
-          setErrorObj("Server responded with invalid format.");
-        }
-      } else {
-        setErrorObj("Could not reach study engine. Try again.");
+      const data = await api.ai.flashcards(flashText);
+      if (data.length === 2 && data[0].front.includes("Sherlock Holmes")) {
+        setErrorObj("Gemini API limit exceeded or backend unreachable. Falling back to mock card decks.");
       }
+      setDeck(data);
+      setFlippedIndex(null);
     } catch (err: any) {
       setErrorObj("Network error occurred during study generation.");
     } finally {
@@ -113,23 +90,15 @@ export default function AiAssistant({
     setLoading(true);
     setErrorObj(null);
     try {
-      const resp = await fetch("/ai/recommend", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          genres: selectedGenres,
-          history: readingHistory.split(",").map(s => s.trim()).filter(Boolean)
-        })
-      });
-      const data = await resp.json();
-      if (resp.status === 429 || data.detail === "quota_exceeded") {
-        setErrorObj("Gemini API rate limit exceeded (quota exceeded). Falling back to cached recommendation items.");
-      } else if (data.recommendations) {
-        setAiRecs(data.recommendations);
-        setAiReasoning(data.reasoning);
-      } else {
-        setErrorObj("Failed to fetch recommendation profiles.");
+      const data = await api.ai.recommend(
+        selectedGenres,
+        readingHistory.split(",").map(s => s.trim()).filter(Boolean)
+      );
+      if (data.reasoning.includes("Showing classic book recommendations") || data.reasoning.includes("AI recommendations are temporarily unavailable")) {
+        setErrorObj("Gemini API rate limit exceeded or backend unreachable. Falling back to cached recommendation items.");
       }
+      setAiRecs(data.recommendations);
+      setAiReasoning(data.reasoning);
     } catch (err: any) {
       setErrorObj("Server not responding.");
     } finally {
@@ -142,20 +111,11 @@ export default function AiAssistant({
     setLoading(true);
     setErrorObj(null);
     try {
-      const resp = await fetch("/ai/explain", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passage: explainPassage, context: explainContext })
-      });
-      const data = await resp.json();
-      if (resp.status === 429 || data.detail === "quota_exceeded") {
-        setErrorObj("Gemini API limit hit. Falling back to semantic lookup.");
-        setExplanation("[Offline Fallback] This text is archaic English representing a unique behavior or rare incident.");
-      } else if (data.explanation) {
-        setExplanation(data.explanation);
-      } else {
-        setErrorObj("Failed to generate contextual explanation.");
+      const data = await api.ai.explain(explainPassage, explainContext);
+      if (data.explanation.includes("[Offline Fallback]")) {
+        setErrorObj("Gemini API limit hit or backend unreachable. Falling back to semantic lookup.");
       }
+      setExplanation(data.explanation);
     } catch (err: any) {
       setErrorObj("Failed to retrieve definitions.");
     } finally {
@@ -194,7 +154,7 @@ export default function AiAssistant({
           onClick={() => { setActiveTab("explain"); setErrorObj(null); }}
           className={`flex-1 py-3 text-center border-b font-medium transition-all ${activeTab === "explain" ? "text-indigo-400 border-indigo-500 bg-slate-900/30" : "hover:text-slate-200 border-transparent hover:bg-slate-900/10"}`}
         >
-          Define
+          Define / Chat
         </button>
         <button
           onClick={() => { setActiveTab("flashcards"); setErrorObj(null); }}
@@ -232,16 +192,24 @@ export default function AiAssistant({
             {activeBookId && (
               <>
                 <div className="space-y-2">
-                  <label className="text-xs font-mono text-slate-400">Target Chapter</label>
+                  <label className="text-xs font-mono text-slate-400">Target Chapter or Custom Text Segment</label>
+                  <input
+                    type="text"
+                    value={selectedChapter}
+                    onChange={(e) => setSelectedChapter(e.target.value)}
+                    placeholder="e.g., Chapter 5: The Chase, or enter custom text to summarize..."
+                    className="w-full p-2.5 rounded bg-slate-900 border border-slate-800 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 mb-2"
+                  />
+                  <span className="text-[10px] text-slate-500 block">Or select from common chapters:</span>
                   <select
                     value={selectedChapter}
                     onChange={(e) => setSelectedChapter(e.target.value)}
                     className="w-full p-2.5 rounded bg-slate-900 border border-slate-800 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
                   >
-                    <option>Chapter 1: The Departure</option>
-                    <option>Chapter 2: Dynamic Encounters</option>
-                    <option>Chapter 3: Theoretical Deductions</option>
-                    <option>Chapter 4: The Climax Outline</option>
+                    <option value="Chapter 1: The Departure">Chapter 1: The Departure</option>
+                    <option value="Chapter 2: Dynamic Encounters">Chapter 2: Dynamic Encounters</option>
+                    <option value="Chapter 3: Theoretical Deductions">Chapter 3: Theoretical Deductions</option>
+                    <option value="Chapter 4: The Climax Outline">Chapter 4: The Climax Outline</option>
                   </select>
                 </div>
 
@@ -272,31 +240,32 @@ export default function AiAssistant({
           </div>
         )}
 
-        {/* Tab 2: Explain / Define */}
+        {/* Tab 2: Explain / Define / Chat */}
         {activeTab === "explain" && (
           <div className="space-y-4">
             <div className="p-3 bg-slate-950/60 border border-slate-800 rounded text-xs text-slate-400 leading-relaxed font-sans">
               <span className="text-indigo-300 font-bold block mb-1">PRO-TIP:</span>
-              Highlight any word or obscure expression in the book text reader, and it will fill this screen to explain the language style.
+              Highlight any word or obscure expression in the book text reader, and it will fill this screen to explain the language style, or type a custom question below.
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-mono text-slate-400 block mb-1.5">Expression / Passage to Define</label>
+                <label className="text-xs font-mono text-slate-400 block mb-1.5">Ask a question or enter a passage to explain</label>
                 <input
                   type="text"
                   value={explainPassage}
                   onChange={(e) => setExplainPassage(e.target.value)}
-                  placeholder="e.g., singular anomaly"
+                  placeholder="e.g., What does 'singular anomaly' mean? Or ask any literary question..."
                   className="w-full p-2.5 rounded bg-slate-900 border border-slate-800 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-mono text-slate-400 block mb-1.5">Surrounding Paragraph Context</label>
+                <label className="text-xs font-mono text-slate-400 block mb-1.5">Surrounding Paragraph Context (Optional)</label>
                 <textarea
                   value={explainContext}
                   onChange={(e) => setExplainContext(e.target.value)}
+                  placeholder="Paste context or surrounding sentence..."
                   rows={3}
                   className="w-full p-2.5 rounded bg-slate-900 border border-slate-800 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
                 />
@@ -307,7 +276,7 @@ export default function AiAssistant({
                 disabled={loading || !explainPassage.trim()}
                 className="w-full cursor-pointer py-3.5 px-4 bg-indigo-500 hover:bg-indigo-600 disabled:bg-slate-800 text-white rounded font-medium text-xs tracking-wider font-mono uppercase flex items-center justify-center gap-2 transition-all"
               >
-                {loading ? <LoaderIcon /> : "Explain Archaic Semantics"}
+                {loading ? <LoaderIcon /> : "Explain or Answer Question"}
               </button>
             </div>
 
@@ -323,13 +292,13 @@ export default function AiAssistant({
         {/* Tab 3: Flashcards */}
         {activeTab === "flashcards" && (
           <div className="space-y-4">
-            <span className="text-xs text-slate-400 leading-normal block">Paste paragraphs or book page text below to extract structural flashcards.</span>
+            <span className="text-xs text-slate-400 leading-normal block">Paste paragraphs or book page text below to extract structural flashcards or ask study questions.</span>
 
             <textarea
               value={flashText}
               onChange={(e) => setFlashText(e.target.value)}
               rows={4}
-              placeholder="e.g. Sir Arthur Conan Doyle was born in Scotland and created Sherlock Holmes."
+              placeholder="Paste paragraphs or book page text below to extract structural flashcards or ask study questions..."
               className="w-full p-2.5 rounded bg-slate-900 border border-slate-800 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
             />
 
@@ -405,7 +374,7 @@ export default function AiAssistant({
                 type="text"
                 value={readingHistory}
                 onChange={(e) => setReadingHistory(e.target.value)}
-                placeholder="e.g., Arthur Conan Doyle, Jane Austen"
+                placeholder="e.g., Arthur Conan Doyle, Jane Austen, or books you enjoyed..."
                 className="w-full p-2.5 rounded bg-slate-900 border border-slate-800 text-sm focus:outline-none focus:border-indigo-500 text-slate-200"
               />
             </div>
