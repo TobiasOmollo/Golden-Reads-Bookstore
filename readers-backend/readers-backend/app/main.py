@@ -12,10 +12,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Allow all localhost origins in development
-# In production, restrict to your actual domain only
-CORS_ORIGINS_ENV = os.getenv('CORS_ORIGINS', '')
-
+# Allow localhost origins + configured origins
 origins = [
     'http://localhost:3000',
     'http://localhost:4000',
@@ -24,14 +21,18 @@ origins = [
     'http://127.0.0.1:3000',
     'http://127.0.0.1:4000',
     'http://127.0.0.1:5173',
-    *([o.strip() for o in CORS_ORIGINS_ENV.split(',') if o.strip()]),
 ]
+
+# Add custom CORS origins configured in settings/environment
+for origin in settings.cors_origins_list:
+    if origin not in origins:
+        origins.append(origin)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=['GET', 'POST', 'OPTIONS'],
+    allow_methods=['*'],
     allow_headers=['*'],
 )
 
