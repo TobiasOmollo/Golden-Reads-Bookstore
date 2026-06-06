@@ -159,7 +159,7 @@ APP_URL="http://localhost:3000"
 
 #### 2. Start Your Preferred Backend Companion
 
-##### Option A: Node.js (Express) Backend
+##### A: Node.js (Express) Backend
 1. Navigate to the backend directory:
    ```bash
    cd readers-backend
@@ -173,7 +173,7 @@ APP_URL="http://localhost:3000"
    npm run dev
    ```
 
-##### Option B: Python (FastAPI) Backend
+##### & B: Python (FastAPI) Backend
 1. Navigate to the Python backend directory:
    ```bash
    cd readers-backend/readers-backend
