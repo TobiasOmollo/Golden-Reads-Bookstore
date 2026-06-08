@@ -91,7 +91,16 @@ function ProfilePage() {
         <div className="rounded-2xl bg-surface border border-divider divide-y divide-divider">
           <Row icon={<Shield size={16} />} label="Security" />
           <Row icon={<Download size={16} />} label="Export my data" />
-          <Row icon={<LogOut size={16} />} label="Sign out" destructive href="/login" />
+          <Row
+            icon={<LogOut size={16} />}
+            label="Sign out"
+            destructive
+            href="/login"
+            onClick={() => {
+              localStorage.removeItem("golden_reads_user");
+              localStorage.removeItem("golden_reads_token");
+            }}
+          />
         </div>
       </section>
 
@@ -117,12 +126,14 @@ function Row({
   trailing,
   destructive,
   href,
+  onClick,
 }: {
   icon: React.ReactNode;
   label: string;
   trailing?: React.ReactNode;
   destructive?: boolean;
   href?: string;
+  onClick?: () => void;
 }) {
   const inner = (
     <div className="flex items-center gap-3 px-4 py-3.5">
@@ -132,7 +143,7 @@ function Row({
     </div>
   );
   if (href) {
-    return <Link to={href}>{inner}</Link>;
+    return <Link to={href} onClick={onClick}>{inner}</Link>;
   }
-  return <button type="button" className="w-full text-left">{inner}</button>;
+  return <button type="button" onClick={onClick} className="w-full text-left">{inner}</button>;
 }

@@ -118,4 +118,12 @@ export const api = {
         { explanation: "[Offline Fallback] This text is archaic English representing a unique behavior or rare incident." }
       ),
   },
+  auth: {
+    login: (email: string, password: string) =>
+      post<{ access_token: string; token_type: string; user: any }>("/auth/login", { email, password }),
+    signup: (email: string, password: string, profileDetails: any) =>
+      post<{ access_token: string; token_type: string; user: any }>("/auth/signup", { email, password, profileDetails }),
+    google: (token: string) =>
+      post<{ access_token: string; token_type: string; user: any }>("/auth/google", { token }),
+  },
 };

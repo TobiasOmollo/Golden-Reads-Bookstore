@@ -3,7 +3,7 @@ from fastapi import FastAPI
 # pyrefly: ignore [missing-import]
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.routers import books, audio, podcasts, magazines, ai
+from app.routers import books, audio, podcasts, magazines, ai, auth
 import os
 
 app = FastAPI(
@@ -42,6 +42,7 @@ app.include_router(audio.router)
 app.include_router(podcasts.router)
 app.include_router(magazines.router)
 app.include_router(ai.router)
+app.include_router(auth.router)
 
 @app.get("/api/health", tags=["System"])
 async def health_check():
