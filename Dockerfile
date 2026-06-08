@@ -12,7 +12,8 @@ COPY . .
 # Build the production server and static pre-rendered routes
 RUN npm run build
 
-EXPOSE 3000
+EXPOSE 8080
 
-# TanStack Start runs on port 3000 by default in production mode
-CMD ["npm", "run", "start"]
+# Run Vite dev server, binding to all interfaces inside the container
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8080"]
+
