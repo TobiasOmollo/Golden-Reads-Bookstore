@@ -5,7 +5,9 @@ import mockBooks from "@/data/books.json";
 import mockMagazines from "@/data/magazines.json";
 import mockPodcasts from "@/data/podcasts.json";
 
-const rawUrl = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:8000";
+const rawUrl =
+  (import.meta.env.VITE_API_URL as string | undefined) ||
+  (import.meta.env.PROD ? "https://readers-backend.onrender.com" : "http://localhost:8000");
 const BASE = rawUrl.endsWith("/") ? rawUrl.slice(0, -1) : rawUrl;
 
 // Robust fallback wrapper execution

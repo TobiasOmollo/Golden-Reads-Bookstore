@@ -14,6 +14,9 @@ import { api } from "@/lib/api/client";
 import { resolveCover } from "@/lib/utils";
 import booksData from "@/data/books.json";
 import type { Book } from "@/types";
+import BookReader from "@/components/book/BookReader";
+import AiAssistant from "@/components/ai/AiAssistant";
+
 
 const books = booksData as Book[];
 
@@ -50,6 +53,10 @@ function BookDetail() {
   const wish = useWishlist();
   const upsert = useLibrary((s) => s.upsert);
   const [expanded, setExpanded] = useState(false);
+  const [reading, setReading] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [highlightedText, setHighlightedText] = useState<{ text: string; context: string } | null>(null);
+
 
   if (!book) {
     return (
@@ -206,8 +213,9 @@ function BookDetail() {
           <button
             onClick={() => {
               upsert(book.id, 1);
+              setReading(true);
             }}
-            className="px-4 h-11 rounded-full bg-muted text-foreground text-sm font-medium"
+            className="px-4 h-11 rounded-full bg-muted text-foreground text-sm font-medium cursor-pointer"
           >
             Start Reading
           </button>
@@ -219,6 +227,29 @@ function BookDetail() {
           </button>
         </div>
       </div>
+
+      {reading && (
+        <BookReader
+          book={book}
+          onClose={() => setReading(false)}
+          onTextHighlight={(text, context) => {
+            setHighlightedText({ text, context });
+            setAiOpen(true);
+          }}
+        />
+      )}
+
+      {aiOpen && (
+        <AiAssistant
+          onClose={() => {
+            setAiOpen(false);
+            setHighlightedText(null);
+          }}
+          activeBookId={book.id}
+          activeBookTitle={book.title}
+          textSelection={highlightedText || undefined}
+        />
+      )}
 
       <Link to="/" className="hidden" />
     </div>

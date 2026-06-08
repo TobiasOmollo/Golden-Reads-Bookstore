@@ -25,6 +25,33 @@ def _cover(book_data: dict) -> str:
     # TIER 3: picsum fallback (always works, seeded = consistent per book)
     return f'https://picsum.photos/seed/book{gid}/200/300'
 
+async def _get_google_books_cover(client: httpx.AsyncClient, title: str, author: str) -> Optional[str]:
+    try:
+        q = f"intitle:{title}"
+        if author and author != "Unknown Author":
+            q += f" inauthor:{author}"
+        
+        resp = await client.get(
+            "https://www.googleapis.com/books/v1/volumes",
+            params={"q": q, "maxResults": 1},
+            timeout=3.0
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            items = data.get("items", [])
+            if items:
+                volume_info = items[0].get("volumeInfo", {})
+                image_links = volume_info.get("imageLinks", {})
+                cover_url = image_links.get("thumbnail") or image_links.get("smallThumbnail")
+                if cover_url:
+                    if cover_url.startswith("http://"):
+                        cover_url = cover_url.replace("http://", "https://")
+                    return cover_url
+    except Exception as e:
+        print(f"Error fetching Google Books cover: {e}")
+    return None
+
+
 class GutendexService:
     def __init__(self):
         # Cache for search & trending queries: { cache_key: (data, expiry_timestamp) }
@@ -56,8 +83,23 @@ class GutendexService:
             mapped.add("Fiction")
         return list(mapped)
 
-    async def _resolve_cover_url(self, client: httpx.AsyncClient, gutendex_id: int, title: str, author: str) -> str:
-        return _cover({"id": gutendex_id})
+    async def _resolve_cover_url(self, client: httpx.AsyncClient, item: dict) -> str:
+        standard_cover = _cover(item)
+        if "picsum.photos" in standard_cover:
+            # picsum fallback, try to enrich with Google Books
+            title = item.get("title", "")
+            authors = item.get("authors", [])
+            author = authors[0].get("name", "") if authors else ""
+            if "," in author:
+                parts = author.split(",")
+                author = f"{parts[1].strip()} {parts[0].strip()}"
+            
+            if title:
+                google_cover = await _get_google_books_cover(client, title, author)
+                if google_cover:
+                    return google_cover
+        return standard_cover
+
 
     def _convert_to_book(self, item: dict, cover_url: str) -> Book:
         authors = item.get("authors", [])
@@ -135,10 +177,15 @@ class GutendexService:
                     return []
                 results_json = resp.json().get("results", [])
                 
+                async def resolve_item_cover(item):
+                    return await self._resolve_cover_url(client, item)
+                
+                covers = await asyncio.gather(*(resolve_item_cover(item) for item in results_json))
+                
                 books = []
-                for item in results_json:
-                    cover_url = _cover(item)
+                for item, cover_url in zip(results_json, covers):
                     books.append(self._convert_to_book(item, cover_url))
+
 
                 self._set_in_cache(cache_key, books)
                 return books
@@ -159,10 +206,15 @@ class GutendexService:
                     return []
                 results_json = resp.json().get("results", [])[:20]
 
+                async def resolve_item_cover(item):
+                    return await self._resolve_cover_url(client, item)
+                
+                covers = await asyncio.gather(*(resolve_item_cover(item) for item in results_json))
+                
                 books = []
-                for item in results_json:
-                    cover_url = _cover(item)
+                for item, cover_url in zip(results_json, covers):
                     books.append(self._convert_to_book(item, cover_url))
+
 
                 self._set_in_cache(cache_key, books)
                 return books
@@ -182,8 +234,9 @@ class GutendexService:
                 if resp.status_code != 200:
                     return None
                 item = resp.json()
-                cover_url = _cover(item)
+                cover_url = await self._resolve_cover_url(client, item)
                 book = self._convert_to_book(item, cover_url)
+
                 self._set_in_cache(cache_key, book)
                 return book
             except Exception:

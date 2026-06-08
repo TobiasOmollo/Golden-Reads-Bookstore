@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # 1. The FastAPI Backend Service
+  backend:
+    build:
+      context: ./readers-backend/readers-backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - JWT_SECRET_KEY=supersecretgold99776
+      - GEMINI_API_KEY=your_actual_gemini_key_here
+      - CORS_ORIGINS=["http://localhost:3000", "http://localhost:8080", "http://localhost:3000"]
+    depends_on:
+      - postgres_db
+      - redis_cache
+
+  # 2. The TanStack Start Frontend Service
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+
+  # 3. Relational Database Service
+  postgres_db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: golden_admin
+      POSTGRES_PASSWORD: secure_africa_password
+      POSTGRES_DB: golden_reads
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # 4. Caching and AI session manager layer
+  redis_cache:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  pg_data:
