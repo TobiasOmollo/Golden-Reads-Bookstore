@@ -1,9 +1,6 @@
 import type { Book, Article, Episode, Flashcard, AudiobookDetail } from "@/types";
 
-const rawUrl =
-  (import.meta.env.VITE_API_URL as string | undefined) ||
-  (import.meta.env.PROD ? "https://readers-backend.onrender.com" : "http://localhost:8000");
-const BASE = rawUrl.endsWith("/") ? rawUrl.slice(0, -1) : rawUrl;
+const BASE = "https://golden-reads-bookstore.onrender.com";
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);

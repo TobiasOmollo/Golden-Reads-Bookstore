@@ -16,25 +16,10 @@ export const Route = createFileRoute("/profile")({
 
 function ProfilePage() {
   const { theme, toggle } = useTheme();
-  const [user, setUser] = useState<{
-    name: string;
-    email: string;
-    avatar?: string;
-    readingGoal?: number;
-  } | null>(null);
-
+  const [user, setUser] = useState<any>(null);
   useEffect(() => {
-    const activeSession = localStorage.getItem("golden_reads_user");
-    if (activeSession) {
-      try {
-        setUser(JSON.parse(activeSession));
-      } catch (e) {
-        console.error("Failed to parse user session, resetting", e);
-        setUser({ name: "Guest Reader", email: "guest@goldenreads.com" });
-      }
-    } else {
-      setUser({ name: "Guest Reader", email: "guest@goldenreads.com" });
-    }
+    const session = localStorage.getItem("golden_reads_user");
+    if (session) setUser(JSON.parse(session));
   }, []);
 
   return (
