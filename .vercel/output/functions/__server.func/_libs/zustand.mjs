@@ -1,4 +1,4 @@
-import { R as React } from "./react.mjs";
+import { R as React__default } from "./react.mjs";
 const createStoreImpl = (createState) => {
   let state;
   const listeners = /* @__PURE__ */ new Set();
@@ -23,12 +23,12 @@ const createStoreImpl = (createState) => {
 const createStore = ((createState) => createState ? createStoreImpl(createState) : createStoreImpl);
 const identity = (arg) => arg;
 function useStore(api, selector = identity) {
-  const slice = React.useSyncExternalStore(
+  const slice = React__default.useSyncExternalStore(
     api.subscribe,
-    React.useCallback(() => selector(api.getState()), [api, selector]),
-    React.useCallback(() => selector(api.getInitialState()), [api, selector])
+    React__default.useCallback(() => selector(api.getState()), [api, selector]),
+    React__default.useCallback(() => selector(api.getInitialState()), [api, selector])
   );
-  React.useDebugValue(slice);
+  React__default.useDebugValue(slice);
   return slice;
 }
 const createImpl = (createState) => {

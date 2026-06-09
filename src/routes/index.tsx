@@ -6,7 +6,6 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { BookRail } from "@/components/BookRail";
 import { BookCardSkeleton } from "@/components/book/BookCard";
 import { api } from "@/lib/api/client";
-import booksData from "@/data/books.json";
 import type { Book } from "@/types";
 
 export const Route = createFileRoute("/")({
@@ -22,20 +21,17 @@ export const Route = createFileRoute("/")({
   component: HomePage,
 });
 
-const fallbackBooks = booksData as Book[];
-
 function byGenre(books: Book[], g: string) {
   return books.filter((b) => b.genre.includes(g));
 }
 
 function HomePage() {
-  const { data: trending = fallbackBooks, isLoading } = useQuery({
+  const { data: trending = [], isLoading } = useQuery({
     queryKey: ["books", "trending"],
     queryFn: api.books.trending,
-    initialData: fallbackBooks,
   });
 
-  const books = trending.length ? trending : fallbackBooks;
+  const books = trending;
 
   const sections: { title: string; href: string; books: Book[] }[] = [
     { title: "Trending Now", href: "/discover", books: books.slice(0, 10) },
@@ -60,11 +56,11 @@ function HomePage() {
       </div>
 
       <div className="mt-4">
-        <HeroCarousel books={books.slice(0, 5)} />
+        {books.length > 0 && <HeroCarousel books={books.slice(0, 5)} />}
       </div>
 
       <div className="mt-8 space-y-8">
-        {isLoading && books === fallbackBooks ? (
+        {isLoading && books.length === 0 ? (
           <div className="grid grid-cols-2 gap-3 px-5">
             {Array.from({ length: 4 }).map((_, i) => (
               <BookCardSkeleton key={i} />

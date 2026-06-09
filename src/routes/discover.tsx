@@ -5,13 +5,12 @@ import { Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { BookCard, BookCardSkeleton } from "@/components/book/BookCard";
-import { GENRES } from "@/data/genres";
 import { api } from "@/lib/api/client";
-import booksData from "@/data/books.json";
 import type { Book } from "@/types";
 import { z } from "zod";
 
-const fallbackBooks = booksData as Book[];
+const GENRES = ["Fiction", "Thriller", "Biography", "Technology", "Romance", "Mystery", "Fantasy", "Business", "Self-Help", "History"];
+
 
 const discoverSearchSchema = z.object({
   q: z.string().optional().catch(""),
@@ -65,24 +64,12 @@ function DiscoverPage() {
     });
   };
 
-  const { data: searchResults, isLoading } = useQuery<Book[]>({
+  const { data: books = [], isLoading } = useQuery<Book[]>({
     queryKey: ["books", "search", debounced, genre],
     queryFn: () => api.books.search(debounced, genre === "All" ? "" : genre),
-    enabled: debounced.length > 1,
   });
 
-  const filtered = useMemo(() => {
-    if (debounced.length > 1 && searchResults) return searchResults;
-    return fallbackBooks.filter(
-        (b) =>
-            (genre === "All" || b.genre.includes(genre)) &&
-            (debounced === "" ||
-                b.title.toLowerCase().includes(debounced.toLowerCase()) ||
-                b.author.toLowerCase().includes(debounced.toLowerCase())),
-    );
-  }, [debounced, genre, searchResults]);
-
-  const showSkeletons = isLoading && debounced.length > 1;
+  const showSkeletons = isLoading;
 
   return (
     <AppShell>
@@ -125,14 +112,14 @@ function DiscoverPage() {
       <motion.div layout className="grid grid-cols-[repeat(auto-fill,minmax(140px,1fr))] gap-x-4 gap-y-8 px-5 mt-6 justify-center">
         {showSkeletons
           ? Array.from({ length: 6 }).map((_, i) => <BookCardSkeleton key={i} />)
-          : filtered.map((b) => (
+          : books.map((b) => (
               <div key={b.id} className="mx-auto">
                 <BookCard book={b} />
               </div>
             ))}
       </motion.div>
 
-      {!showSkeletons && filtered.length === 0 && (
+      {!showSkeletons && books.length === 0 && (
         <p className="px-5 mt-10 text-center text-sm text-muted-foreground">
           No books match your search.
         </p>

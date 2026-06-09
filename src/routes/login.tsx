@@ -114,7 +114,7 @@ function LoginPage() {
   useEffect(() => {
     const session = localStorage.getItem("golden_reads_user");
     if (session) {
-      navigate({ to: "/profile" });
+      navigate({ to: "/" });
     }
   }, [navigate]);
 
@@ -170,39 +170,16 @@ function LoginPage() {
     try {
       const response = await api.auth.login(email, password);
       setSuccessMsg("Welcome back! Loading your bookshelf...");
+      // Save authentic live session values upon server validation approval
+      localStorage.setItem("golden_reads_token", response.access_token);
       localStorage.setItem("golden_reads_user", JSON.stringify(response.user));
-      if (response.access_token) {
-        localStorage.setItem("golden_reads_token", response.access_token);
-      }
       setTimeout(() => {
-        navigate({ to: "/profile" });
+        navigate({ to: "/" });
       }, 1200);
     } catch (err: any) {
       console.error("Login failed", err);
-      // Friendly local fallback verification if backend is offline or throws 500
-      if (err.message?.includes("Failed to fetch") || err.message?.includes("API error")) {
-        // Mock offline fallback check for default credentials
-        if (email === "amara@goldenreads.app" && password === "password") {
-          const mockUser = {
-            id: "u_001",
-            name: "Amara Okonkwo",
-            email: "amara@goldenreads.app",
-            avatar: "https://i.pravatar.cc/200?img=47",
-            genres: ["Fiction", "Thriller", "Biography"],
-            readingGoal: 24,
-            preferredFormats: ["epub", "audio"]
-          };
-          setSuccessMsg("Logged in (Offline Mode). Welcome back!");
-          localStorage.setItem("golden_reads_user", JSON.stringify(mockUser));
-          setTimeout(() => navigate({ to: "/profile" }), 1000);
-        } else {
-          setErrorMsg("Login failed. Check your network or credentials.");
-          triggerShake();
-        }
-      } else {
-        setErrorMsg("Invalid email or password.");
-        triggerShake();
-      }
+      setErrorMsg("Invalid email or password.");
+      triggerShake();
     } finally {
       setLoading(false);
     }
@@ -240,12 +217,11 @@ function LoginPage() {
     try {
       const response = await api.auth.signup(email, password, profileDetails);
       setSuccessMsg("Account created successfully! Preparing your library...");
+      // Save authentic live session values upon server validation approval
+      localStorage.setItem("golden_reads_token", response.access_token);
       localStorage.setItem("golden_reads_user", JSON.stringify(response.user));
-      if (response.access_token) {
-        localStorage.setItem("golden_reads_token", response.access_token);
-      }
       setTimeout(() => {
-        navigate({ to: "/profile" });
+        navigate({ to: "/" });
       }, 1500);
     } catch (err: any) {
       console.error("Signup failed", err);
@@ -271,12 +247,11 @@ function LoginPage() {
       const response = await api.auth.google(mockOAuthToken);
       
       setSuccessMsg("Google sign-in verified! Redirecting...");
+      // Save authentic live session values upon server validation approval
+      localStorage.setItem("golden_reads_token", response.access_token);
       localStorage.setItem("golden_reads_user", JSON.stringify(response.user));
-      if (response.access_token) {
-        localStorage.setItem("golden_reads_token", response.access_token);
-      }
       setTimeout(() => {
-        navigate({ to: "/profile" });
+        navigate({ to: "/" });
       }, 1200);
     } catch (err: any) {
       console.error("Google authentication failed", err);

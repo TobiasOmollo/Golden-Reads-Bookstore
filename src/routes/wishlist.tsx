@@ -4,12 +4,11 @@ import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useWishlist } from "@/store/wishlist";
 import { useCart } from "@/store/cart";
-import booksData from "@/data/books.json";
-import type { Book } from "@/types/api";
+import { useQueries } from "@tanstack/react-query";
+import { api } from "@/lib/api/client";
+import type { Book } from "@/types";
 import { formatKES } from "@/lib/format";
 import { resolveCover } from "@/lib/utils";
-
-const books = booksData as Book[];
 
 export const Route = createFileRoute("/wishlist")({
   head: () => ({
@@ -24,7 +23,17 @@ export const Route = createFileRoute("/wishlist")({
 function WishlistPage() {
   const wish = useWishlist();
   const add = useCart((s) => s.add);
-  const items = books.filter((b) => wish.ids.includes(b.id));
+
+  const results = useQueries({
+    queries: wish.ids.map((id) => ({
+      queryKey: ["book", id],
+      queryFn: () => api.books.detail(id),
+    })),
+  });
+
+  const items = results
+    .map((res) => res.data)
+    .filter((book): book is Book => !!book);
 
   return (
     <AppShell>

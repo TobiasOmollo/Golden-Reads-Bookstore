@@ -3,11 +3,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { useLibrary } from "@/store/library";
-import booksData from "@/data/books.json";
-import type { Book } from "@/types/api";
+import { useQueries } from "@tanstack/react-query";
+import { api } from "@/lib/api/client";
+import type { Book } from "@/types";
 import { resolveCover } from "@/lib/utils";
-
-const books = booksData as Book[];
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -39,9 +38,20 @@ function LibraryPage() {
   const entries = useLibrary((s) => s.entries);
   const [tab, setTab] = useState<"all" | "reading" | "completed">("all");
 
-  const rows = entries
-    .map((e) => ({ entry: e, book: books.find((b) => b.id === e.bookId)! }))
-    .filter((r) => r.book)
+  const results = useQueries({
+    queries: entries.map((e) => ({
+      queryKey: ["book", e.bookId],
+      queryFn: () => api.books.detail(e.bookId),
+    })),
+  });
+
+  const rows = results
+    .map((res, i) => {
+      const entry = entries[i];
+      const book = res.data;
+      return { entry, book };
+    })
+    .filter((r): r is { entry: typeof entries[number]; book: Book } => !!r.book)
     .filter((r) => (tab === "all" ? true : r.entry.status === tab));
 
   const pagesToday = useCountUp(47);

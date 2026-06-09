@@ -12,17 +12,15 @@ import { useLibrary } from "@/store/library";
 import { formatKES } from "@/lib/format";
 import { api } from "@/lib/api/client";
 import { resolveCover } from "@/lib/utils";
-import booksData from "@/data/books.json";
 import type { Book } from "@/types";
 import BookReader from "@/components/book/BookReader";
 import AiAssistant from "@/components/ai/AiAssistant";
 
 
-const books = booksData as Book[];
-
 export const Route = createFileRoute("/book/$id")({
-  head: ({ params }) => {
-    const book = books.find((b) => b.id === params.id);
+  loader: ({ params }) => api.books.detail(params.id),
+  head: ({ loaderData }) => {
+    const book = loaderData;
     return {
       meta: [
         { title: book ? `${book.title} – Golden Reads` : "Book – Golden Reads" },
@@ -43,11 +41,11 @@ export const Route = createFileRoute("/book/$id")({
 function BookDetail() {
   const { id } = Route.useParams();
   const router = useRouter();
-  const fallback = books.find((b) => b.id === id) ?? books[0];
-  const { data: book = fallback } = useQuery<Book>({
+  const loaderData = Route.useLoaderData();
+  const { data: book = loaderData } = useQuery<Book>({
     queryKey: ["book", id],
     queryFn: () => api.books.detail(id),
-    initialData: fallback,
+    initialData: loaderData,
   });
   const add = useCart((s) => s.add);
   const wish = useWishlist();
@@ -57,6 +55,12 @@ function BookDetail() {
   const [aiOpen, setAiOpen] = useState(false);
   const [highlightedText, setHighlightedText] = useState<{ text: string; context: string } | null>(null);
 
+
+  const { data: rawSimilar = [] } = useQuery<Book[]>({
+    queryKey: ["books", "similar", book?.genre?.[0] || ""],
+    queryFn: () => api.books.search("", book?.genre?.[0] || ""),
+    enabled: !!book?.genre?.[0],
+  });
 
   if (!book) {
     return (
@@ -68,7 +72,7 @@ function BookDetail() {
     );
   }
 
-  const similar = books.filter((b) => b.id !== book.id && b.genre.some((g) => book.genre.includes(g))).slice(0, 8);
+  const similar = rawSimilar.filter((b) => b.id !== book.id).slice(0, 8);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-32">
