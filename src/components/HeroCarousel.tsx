@@ -32,9 +32,7 @@ export function HeroCarousel({ books }: { books: Book[] }) {
               alt={book.title}
               className="w-full h-full object-cover"
               onError={(e) => {
-                const seed = book.id ?? 'fallback';
-                (e.target as HTMLImageElement).onerror = null;
-                (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/400/600`;
+                e.currentTarget.style.display = "none";
               }}
             />
             <div className="absolute inset-0 scrim-bottom" />

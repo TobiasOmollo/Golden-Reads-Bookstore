@@ -3,7 +3,7 @@ from typing import List
 from app.models.schemas import AudiobookDetail
 from app.services.librivox import librivox_service
 
-router = APIRouter(prefix="/audiobooks", tags=["Audiobooks"])
+router = APIRouter(prefix="/audio", tags=["Audiobooks"])
 
 @router.get("/search", response_model=List[AudiobookDetail])
 async def search_audiobooks(q: str = Query(..., min_length=2, description="Audiobook search query")):

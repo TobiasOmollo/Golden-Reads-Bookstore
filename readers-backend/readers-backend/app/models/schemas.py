@@ -15,6 +15,9 @@ class Book(BaseModel):
     formats: List[str]
     gutendexId: Optional[int] = None
     librivoxId: Optional[int] = None
+    read_url: Optional[str] = ""
+    epub_url: Optional[str] = ""
+    download_url: Optional[str] = ""
 
 class Episode(BaseModel):
     id: str

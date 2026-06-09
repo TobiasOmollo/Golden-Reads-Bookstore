@@ -28,10 +28,7 @@ export function BookCard({ book }: { book: Book }) {
             loading="lazy"
             className="w-full h-full object-cover group-active:scale-[0.98] transition-transform"
             onError={(e) => {
-              // If any URL fails, fall back to a reliable picsum image
-              const seed = book.id ?? 'fallback';
-              (e.target as HTMLImageElement).onerror = null; // prevent infinite loop
-              (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/200/300`;
+              e.currentTarget.style.display = "none";
             }}
           />
           <button

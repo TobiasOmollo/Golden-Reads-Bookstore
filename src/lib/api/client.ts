@@ -1,4 +1,4 @@
-import type { Book, Article, Episode, Flashcard } from "@/types";
+import type { Book, Article, Episode, Flashcard, AudiobookDetail } from "@/types";
 
 // Import your local JSON fallbacks as requested to preserve offline functionality
 import mockBooks from "@/data/books.json";
@@ -57,11 +57,11 @@ export const api = {
   },
   audio: {
     search: (q: string) => 
-      handleFetchWithFallback<Book[]>(() => get<Book[]>(`/audio/search?q=${encodeURIComponent(q)}`), mockBooks as unknown as Book[]),
+      handleFetchWithFallback<AudiobookDetail[]>(() => get<AudiobookDetail[]>(`/audio/search?q=${encodeURIComponent(q)}`), []),
     detail: (id: string) => 
-      handleFetchWithFallback<Book>(
-        () => get<Book>(`/audio/${id}`),
-        (mockBooks as unknown as Book[]).find(b => b.id === id) || (mockBooks[0] as unknown as Book)
+      handleFetchWithFallback<AudiobookDetail>(
+        () => get<AudiobookDetail>(`/audio/${id}`),
+        null as any
       ),
   },
   podcasts: {
@@ -71,26 +71,15 @@ export const api = {
       handleFetchWithFallback<Episode[]>(() => get<Episode[]>(`/podcasts/${feedId}/episodes`), mockPodcasts as unknown as Episode[]),
   },
   magazines: {
-    bulletin: (limit = 30) => 
-      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/bulletin?limit=${limit}`), mockMagazines as unknown as Article[]),
-    eastAfrica: (limit = 60) => 
-      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/eastafrica?limit=${limit}`), mockMagazines as unknown as Article[]),
-    business: (limit = 30) => 
-      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/business?limit=${limit}`), mockMagazines as unknown as Article[]),
-    lifestyle: (limit = 20) => 
-      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/lifestyle?limit=${limit}`), mockMagazines as unknown as Article[]),
-    technology: (limit = 20) => 
-      handleFetchWithFallback<Article[]>(() => get<Article[]>(`/magazines/technology?limit=${limit}`), mockMagazines as unknown as Article[]),
+    bulletin: (limit = 30) => get<Article[]>(`/magazines/bulletin?limit=${limit}`),
+    eastAfrica: (limit = 60) => get<Article[]>(`/magazines/eastafrica?limit=${limit}`),
+    business: (limit = 30) => get<Article[]>(`/magazines/business?limit=${limit}`),
+    lifestyle: (limit = 20) => get<Article[]>(`/magazines/lifestyle?limit=${limit}`),
+    technology: (limit = 20) => get<Article[]>(`/magazines/technology?limit=${limit}`),
     feeds: (countries = "", categories = "", limit = 60) =>
-      handleFetchWithFallback<Article[]>(
-        () => get<Article[]>(`/magazines/feeds?countries=${encodeURIComponent(countries)}&categories=${encodeURIComponent(categories)}&limit=${limit}`),
-        mockMagazines as unknown as Article[]
-      ),
+      get<Article[]>(`/magazines/feeds?countries=${encodeURIComponent(countries)}&categories=${encodeURIComponent(categories)}&limit=${limit}`),
     archive: (q: string) =>
-      handleFetchWithFallback<Article[]>(
-        () => get<Article[]>(`/magazines/archive?q=${encodeURIComponent(q)}`),
-        mockMagazines as unknown as Article[]
-      ),
+      get<Article[]>(`/magazines/archive?q=${encodeURIComponent(q)}`),
   },
   ai: {
     summarize: (bookId: string, chapter: string) =>

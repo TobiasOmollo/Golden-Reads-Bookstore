@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Radio } from "lucide-react";
+import { Radio, AlertTriangle, Newspaper } from "lucide-react";
 import { motion } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { api } from "@/lib/api/client";
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/bulletin")({
 });
 
 function BulletinPage() {
-  const { data: articles = [], isLoading } = useQuery<Article[]>({
+  const { data: articles = [], isLoading, isError, refetch } = useQuery<Article[]>({
     queryKey: ["magazines", "bulletin"],
     queryFn: () => api.magazines.bulletin(),
   });
@@ -44,6 +44,22 @@ function BulletinPage() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <ArticleCardSkeleton key={i} />
               ))}
+            </div>
+          ) : isError ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-red-500/30 rounded-2xl bg-red-500/5 dark:bg-red-950/10">
+              <Newspaper className="text-red-500 mb-3 animate-pulse" size={40} />
+              <p className="text-sm font-semibold text-foreground">
+                Failed to load real-time publications.
+              </p>
+              <p className="text-xs text-muted-foreground mt-1 max-w-xs mx-auto">
+                There was a network error fetching live RSS feeds. Check your backend status or connection.
+              </p>
+              <button 
+                onClick={() => refetch()} 
+                className="mt-4 px-4 py-2 bg-gold text-background rounded-lg text-xs font-mono font-bold hover:bg-gold/80 transition-colors"
+              >
+                Retry Connection
+              </button>
             </div>
           ) : articles.length > 0 ? (
             <motion.div

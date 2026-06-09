@@ -12,6 +12,9 @@ export interface Book {
   formats: ("epub" | "audio")[];
   gutendexId?: number;
   librivoxId?: string;
+  read_url?: string;
+  epub_url?: string;
+  download_url?: string;
 }
 
 export interface Episode {

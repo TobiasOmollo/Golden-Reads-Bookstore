@@ -52,6 +52,35 @@ async def _get_google_books_cover(client: httpx.AsyncClient, title: str, author:
     return None
 
 
+async def resolve_cover(isbn: str, gutenberg_id: int) -> str:
+    isbn_clean = (isbn or "").strip().replace("-", "")
+    if isbn_clean:
+        # 1. Google Books API (primary)
+        google_url = "https://www.googleapis.com/books/v1/volumes"
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(google_url, params={"q": f"isbn:{isbn_clean}", "maxResults": 1}, timeout=10.0)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    items = data.get("items", [])
+                    if items:
+                        volume_info = items[0].get("volumeInfo", {})
+                        image_links = volume_info.get("imageLinks", {})
+                        cover_url = image_links.get("thumbnail") or image_links.get("smallThumbnail")
+                        if cover_url:
+                            if cover_url.startswith("http://"):
+                                cover_url = cover_url.replace("http://", "https://")
+                            return cover_url
+        except Exception as e:
+            print(f"Error querying Google Books API for ISBN {isbn_clean}: {e}")
+
+        # 2. Open Library (secondary fallback)
+        return f"https://covers.openlibrary.org/b/isbn/{isbn_clean}-L.jpg"
+
+    # 3. Internet Archive (final fallback)
+    return f"https://archive.org/services/img/{gutenberg_id}"
+
+
 class GutendexService:
     def __init__(self):
         # Cache for search & trending queries: { cache_key: (data, expiry_timestamp) }
@@ -84,21 +113,23 @@ class GutendexService:
         return list(mapped)
 
     async def _resolve_cover_url(self, client: httpx.AsyncClient, item: dict) -> str:
-        standard_cover = _cover(item)
-        if "picsum.photos" in standard_cover:
-            # picsum fallback, try to enrich with Google Books
+        isbn = item.get("isbn", "").strip()
+        gutenberg_id = item.get("id", 0)
+        
+        # If no explicit ISBN is in the Gutendex item, attempt Google Books title/author enrichment
+        if not isbn:
             title = item.get("title", "")
             authors = item.get("authors", [])
             author = authors[0].get("name", "") if authors else ""
             if "," in author:
                 parts = author.split(",")
                 author = f"{parts[1].strip()} {parts[0].strip()}"
-            
             if title:
                 google_cover = await _get_google_books_cover(client, title, author)
                 if google_cover:
                     return google_cover
-        return standard_cover
+                    
+        return await resolve_cover(isbn, gutenberg_id)
 
 
     def _convert_to_book(self, item: dict, cover_url: str) -> Book:
@@ -140,6 +171,11 @@ class GutendexService:
 
         description = ", ".join(subjects) if subjects else f"A classic book of the genre {', '.join(genres)}."
 
+        # Extract read, epub and download URLs from Gutenberg formats dict
+        read_url_extracted = formats_dict.get("text/html") or formats_dict.get("text/plain; charset=us-ascii") or formats_dict.get("text/plain") or ""
+        epub_url_extracted = formats_dict.get("application/epub+zip") or ""
+        download_url_extracted = formats_dict.get("text/plain; charset=utf-8") or formats_dict.get("text/plain") or ""
+
         return Book(
             id=f"g{gid}",
             title=item.get("title", "Untitled Book"),
@@ -152,7 +188,10 @@ class GutendexService:
             pages=pages,
             readingTime=reading_time,
             formats=formats,
-            gutendexId=gid
+            gutendexId=gid,
+            read_url=read_url_extracted,
+            epub_url=epub_url_extracted,
+            download_url=download_url_extracted
         )
 
     async def search_books(self, query: Optional[str] = None, genre: Optional[str] = None, page: int = 1) -> List[Book]:

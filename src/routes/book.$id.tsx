@@ -84,9 +84,7 @@ function BookDetail() {
             alt={book.title}
             className="w-full h-full object-cover"
             onError={(e) => {
-              const seed = book.id ?? 'fallback';
-              (e.target as HTMLImageElement).onerror = null;
-              (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/400/600`;
+              e.currentTarget.style.display = "none";
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-background" />
@@ -158,6 +156,39 @@ function BookDetail() {
               label="Format"
               value={book.formats.includes("audio") ? "Audio + Ebook" : "Ebook"}
             />
+          </div>
+
+          {/* Ebook Actions Section */}
+          <div className="mt-6 space-y-2.5">
+            {book.read_url && (
+              <a
+                href={book.read_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gold/10 text-gold font-mono text-[11px] uppercase tracking-wider font-bold border border-gold/20 hover:bg-gold/25 transition-colors"
+              >
+                <BookOpen size={14} />
+                Read Online
+              </a>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              {book.epub_url && (
+                <a
+                  href={book.epub_url}
+                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-divider text-muted-foreground font-mono text-[10px] uppercase tracking-wider hover:text-foreground hover:border-muted-foreground transition-colors"
+                >
+                  Download EPUB
+                </a>
+              )}
+              {book.download_url && (
+                <a
+                  href={book.download_url}
+                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-divider text-muted-foreground font-mono text-[10px] uppercase tracking-wider hover:text-foreground hover:border-muted-foreground transition-colors"
+                >
+                  Download Text
+                </a>
+              )}
+            </div>
           </div>
         </motion.section>
 

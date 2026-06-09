@@ -5,7 +5,7 @@ from app.models.schemas import AudiobookDetail, AudiobookChapter
 
 class LibriVoxService:
     def __init__(self):
-        self.base_url = "https://librivox.org/api/feed/audiobooks"
+        self.base_url = "https://librivox.org/api/feed/audiobooks/"
         # Cache of resolved audiobooks to speed up immediate detailed retrieval
         self._cache: Dict[str, AudiobookDetail] = {}
 
@@ -31,13 +31,12 @@ class LibriVoxService:
     async def search_audiobooks(self, query: str) -> List[AudiobookDetail]:
         params = {
             "title": f"^{query}", # Match start or general title
-            "format": "json",
-            "extended": "1" # include sections for full detail
+            "format": "json"
         }
 
         async with httpx.AsyncClient() as client:
             try:
-                resp = await client.get(self.base_url, params=params, timeout=12.0)
+                resp = await client.get(self.base_url, params=params, timeout=10.0)
                 if resp.status_code != 200:
                     # Retry with simple query if exact regex start yields nothing
                     params["title"] = query

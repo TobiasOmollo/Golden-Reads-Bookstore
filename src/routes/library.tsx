@@ -99,9 +99,7 @@ function LibraryPage() {
                 alt={book.title}
                 className="w-14 h-20 rounded-lg object-cover bg-muted shrink-0"
                 onError={(e) => {
-                  const seed = book.id ?? 'fallback';
-                  (e.target as HTMLImageElement).onerror = null;
-                  (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${seed}/200/300`;
+                  e.currentTarget.style.display = "none";
                 }}
               />
               <div className="flex-1 min-w-0">
