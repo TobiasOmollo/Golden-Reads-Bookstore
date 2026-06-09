@@ -1,1 +1,0 @@
-import{c as t,p as l}from"./AppShell-BQW_p8zz.js";const c=t()(l((e,r)=>({ids:[],toggle:i=>e(s=>({ids:s.ids.includes(i.id)?s.ids.filter(d=>d!==i.id):[...s.ids,i.id]})),has:i=>r().ids.includes(i),remove:i=>e(s=>({ids:s.ids.filter(d=>d!==i)}))}),{name:"gr-wishlist"}));export{c as u};

@@ -20,18 +20,10 @@ async function post<T>(path: string, body: unknown): Promise<T> {
 
 export const api = {
   books: {
-    trending: async (): Promise<Book[]> => {
-      return get<Book[]>("/books/trending");
-    },
-    search: async (q: string, genre = ""): Promise<Book[]> => {
-      return get<Book[]>(`/books/search?q=${encodeURIComponent(q)}&genre=${encodeURIComponent(genre)}`);
-    },
-    detail: async (id: string): Promise<Book> => {
-      return get<Book>(`/books/${id}`);
-    },
-    discover: async (q: string): Promise<Book[]> => {
-      return get<Book[]>(`/books/search?q=${encodeURIComponent(q)}`);
-    },
+    trending: (): Promise<Book[]> => get<Book[]>('/books/trending'),
+    search: (q: string, genre = ""): Promise<Book[]> => get<Book[]>(`/books/search?q=${encodeURIComponent(q)}&genre=${encodeURIComponent(genre)}`),
+    detail: (id: string): Promise<Book> => get<Book>(`/books/${id}`),
+    discover: (q: string): Promise<Book[]> => get<Book[]>(`/books/search?q=${encodeURIComponent(q)}`),
     coverUrl: (id: string, openLibraryId?: string | number) =>
       openLibraryId
         ? `https://covers.openlibrary.org/b/id/${openLibraryId}-L.jpg`

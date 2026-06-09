@@ -28,7 +28,10 @@ export function BookCard({ book }: { book: Book }) {
             loading="lazy"
             className="w-full h-full object-cover group-active:scale-[0.98] transition-transform"
             onError={(e) => {
-              e.currentTarget.style.display = "none";
+              const target = e.currentTarget;
+              if (!target.src.endsWith('/placeholder-cover.jpg')) {
+                target.src = '/placeholder-cover.jpg';
+              }
             }}
           />
           <button

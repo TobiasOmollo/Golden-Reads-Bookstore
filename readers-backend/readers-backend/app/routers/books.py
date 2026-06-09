@@ -6,6 +6,60 @@ from app.services.gutendex import gutendex_service
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
+FALLBACK_CLASSICS = [
+    Book(
+        id="g1342",
+        title="Pride and Prejudice",
+        author="Jane Austen",
+        cover="https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg",
+        rating=4.8,
+        price=0.0,
+        genre=["Fiction", "Romance"],
+        description="Pride and Prejudice is a romantic novel of manners written by Jane Austen in 1813.",
+        pages=352,
+        readingTime=528,
+        formats=["epub", "html", "text"],
+        gutendexId=1342,
+        read_url="https://www.gutenberg.org/files/1342/1342-h/1342-h.htm",
+        epub_url="https://www.gutenberg.org/ebooks/1342.epub3.images",
+        download_url="https://www.gutenberg.org/files/1342/1342-0.txt"
+    ),
+    Book(
+        id="g1497",
+        title="The Republic",
+        author="Plato",
+        cover="https://www.gutenberg.org/cache/epub/1497/pg1497.cover.medium.jpg",
+        rating=4.7,
+        price=0.0,
+        genre=["Philosophy", "Fiction"],
+        description="The Republic is a Socratic dialogue, authored by Plato around 375 BC, concerning justice.",
+        pages=416,
+        readingTime=624,
+        formats=["epub", "html", "text"],
+        gutendexId=1497,
+        read_url="https://www.gutenberg.org/files/1497/1497-h/1497-h.htm",
+        epub_url="https://www.gutenberg.org/ebooks/1497.epub3.images",
+        download_url="https://www.gutenberg.org/files/1497/1497-0.txt"
+    ),
+    Book(
+        id="g84",
+        title="Frankenstein; Or, The Modern Prometheus",
+        author="Mary Wollstonecraft Shelley",
+        cover="https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg",
+        rating=4.6,
+        price=0.0,
+        genre=["Fiction", "Horror", "Mystery"],
+        description="Frankenstein; or, The Modern Prometheus is an 1818 novel written by English author Mary Shelley.",
+        pages=280,
+        readingTime=420,
+        formats=["epub", "html", "text"],
+        gutendexId=84,
+        read_url="https://www.gutenberg.org/files/84/84-h/84-h.htm",
+        epub_url="https://www.gutenberg.org/ebooks/84.epub3.images",
+        download_url="https://www.gutenberg.org/files/84/84-0.txt"
+    )
+]
+
 @router.get("/search", response_model=List[Book])
 async def search_books(
     q: Optional[str] = Query(None, description="Search term for title or author"),
@@ -13,16 +67,22 @@ async def search_books(
     page: int = Query(1, ge=1, description="Page number")
 ):
     try:
-        return await gutendex_service.search_books(query=q, genre=genre, page=page)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to query Gutenberg: {str(e)}")
+        results = await gutendex_service.search_books(query=q, genre=genre, page=page)
+        if not results:
+            return FALLBACK_CLASSICS
+        return results
+    except Exception:
+        return FALLBACK_CLASSICS
 
 @router.get("/trending", response_model=List[Book])
 async def get_trending():
     try:
-        return await gutendex_service.get_trending_books()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get trending: {str(e)}")
+        results = await gutendex_service.get_trending_books()
+        if not results:
+            return FALLBACK_CLASSICS
+        return results
+    except Exception:
+        return FALLBACK_CLASSICS
 
 @router.get("/{id}", response_model=Book)
 async def get_book_by_id(id: str):
