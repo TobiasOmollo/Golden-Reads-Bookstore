@@ -159,7 +159,7 @@ function BookDetail() {
             <Stat
               icon={<Headphones size={14} />}
               label="Format"
-              value={book.formats?.includes("audio") ? "Audio + Ebook" : "Ebook"}
+              value={book.formats?.includes?.("audio") ? "Audio + Ebook" : "Ebook"}
             />
           </div>
 

@@ -18,14 +18,60 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return (await res.json()) as T;
 }
 
+export function normalizeBook(raw: any): Book {
+  if (!raw) return raw;
+  return {
+    ...raw,
+    title: raw.title ?? 'Unknown Title',
+    author: raw.author ?? 'Unknown Author',
+    cover_url: raw.cover_url ?? raw.cover ?? '',
+    cover: raw.cover ?? raw.cover_url ?? '',
+    description: raw.description ?? '',
+    genre: raw.genre ?? 'Fiction',
+    authors: raw.authors ?? [],
+    genres: raw.genres ?? [],
+    formats: raw.formats ?? {},
+    subjects: raw.subjects ?? [],
+    bookshelves: raw.bookshelves ?? [],
+    languages: raw.languages ?? [],
+  };
+}
+
+export function normalizeAudiobook(raw: any): AudiobookDetail {
+  if (!raw) return raw;
+  return {
+    ...raw,
+    title: raw.title ?? 'Unknown Title',
+    author: raw.author ?? 'Unknown Author',
+    description: raw.description ?? '',
+    cover: raw.cover ?? '',
+    chapters: raw.chapters ?? [],
+    authors: raw.authors ?? [],
+    genres: raw.genres ?? [],
+    url_zip_file: raw.url_zip_file ?? null,
+    num_sections: raw.num_sections ?? 0,
+    language: raw.language ?? '',
+  };
+}
+
 export const api = {
   books: {
-    discover: (q: string) => get<Book[]>(`/books/search?q=${encodeURIComponent(q)}`),
-    trending: () => get<Book[]>('/books/trending'),
-    search: (q: string, genre = ""): Promise<Book[]> => get<Book[]>(`/books/search?q=${encodeURIComponent(q)}&genre=${encodeURIComponent(genre)}`),
-    detail: (id: string): Promise<Book> => {
+    discover: async (q: string): Promise<Book[]> => {
+      const res = await get<Book[]>(`/books/search?q=${encodeURIComponent(q)}`);
+      return (res || []).map(normalizeBook);
+    },
+    trending: async (): Promise<Book[]> => {
+      const res = await get<Book[]>('/books/trending');
+      return (res || []).map(normalizeBook);
+    },
+    search: async (q: string, genre = ""): Promise<Book[]> => {
+      const res = await get<Book[]>(`/books/search?q=${encodeURIComponent(q)}&genre=${encodeURIComponent(genre)}`);
+      return (res || []).map(normalizeBook);
+    },
+    detail: async (id: string): Promise<Book> => {
       const cleanId = id.startsWith('g') ? id.slice(1) : id;
-      return get<Book>(`/books/${cleanId}`);
+      const res = await get<Book>(`/books/${cleanId}`);
+      return normalizeBook(res);
     },
     coverUrl: (id: string, openLibraryId?: string | number) =>
       openLibraryId
@@ -34,10 +80,12 @@ export const api = {
   },
   audio: {
     search: async (q: string): Promise<AudiobookDetail[]> => {
-      return get<AudiobookDetail[]>(`/audio/search?q=${encodeURIComponent(q)}`);
+      const res = await get<AudiobookDetail[]>(`/audio/search?q=${encodeURIComponent(q)}`);
+      return (res || []).map(normalizeAudiobook);
     },
     detail: async (id: string): Promise<AudiobookDetail> => {
-      return get<AudiobookDetail>(`/audio/${id}`);
+      const res = await get<AudiobookDetail>(`/audio/${id}`);
+      return normalizeAudiobook(res);
     },
   },
   podcasts: {

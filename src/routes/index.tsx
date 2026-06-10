@@ -24,9 +24,9 @@ export const Route = createFileRoute("/")({
 function byGenre(books: Book[], g: string) {
   return books.filter((b) => {
     if (Array.isArray(b.genre)) {
-      return b.genre?.includes(g) ?? false;
+      return b.genre?.includes?.(g) ?? false;
     }
-    return typeof b.genre === "string" && (b.genre?.includes(g) ?? false);
+    return typeof b.genre === "string" && (b.genre?.includes?.(g) ?? false);
   });
 }
 
@@ -46,7 +46,7 @@ function HomePage() {
     { title: "Technology Books", href: "/discover", books: byGenre(books, "Technology") },
     { title: "Business Books", href: "/discover", books: byGenre(books, "Business") },
     { title: "Fiction Collection", href: "/discover", books: byGenre(books, "Fiction") },
-    { title: "Audiobooks", href: "/discover", books: books.filter((b) => b.formats?.includes("audio") ?? false).slice(0, 10) },
+    { title: "Audiobooks", href: "/discover", books: books.filter((b) => b.formats?.includes?.("audio") ?? false).slice(0, 10) },
   ];
 
   return (

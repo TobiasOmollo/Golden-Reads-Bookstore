@@ -10,12 +10,18 @@ export interface Book {
   price?: number;
   pages?: number;
   readingTime?: string | number;
-  formats?: ("epub" | "audio" | "html" | "text" | string)[];
+  formats?: ("epub" | "audio" | "html" | "text" | string)[] | any;
   gutendexId?: number;
   librivoxId?: string;
   read_url?: string;
   epub_url?: string;
   download_url?: string;
+  
+  authors?: any[];
+  genres?: string[];
+  subjects?: string[];
+  bookshelves?: string[];
+  languages?: string[];
 }
 
 export interface Episode {
@@ -64,6 +70,11 @@ export interface AudiobookDetail {
   description: string;
   cover: string;
   chapters: AudiobookChapter[];
+  authors?: any[];
+  genres?: string[];
+  url_zip_file?: string | null;
+  num_sections?: number;
+  language?: string;
 }
 
 export interface PodcastChannel {
