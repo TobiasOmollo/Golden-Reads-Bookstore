@@ -26,10 +26,16 @@ class LibriVoxService:
         isbn = book_data.get("isbn") or ""
         isbn = isbn.strip().replace("-", "") if isinstance(isbn, str) else ""
         book_id = book_data.get("id", "audiobook")
+        url = None
         if isbn:
-            return f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
-        # Generous fallback using Picsum seeded with Book ID to keep it colorful and interesting
-        return f"https://picsum.photos/seed/audio_{book_id}/200/300"
+            url = f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
+        else:
+            # Generous fallback using Picsum seeded with Book ID to keep it colorful and interesting
+            url = f"https://picsum.photos/seed/audio_{book_id}/200/300"
+            
+        if url and url.startswith("http://"):
+            url = url.replace("http://", "https://", 1)
+        return url
 
     async def search_audiobooks(self, query: str) -> List[AudiobookDetail]:
         params = {

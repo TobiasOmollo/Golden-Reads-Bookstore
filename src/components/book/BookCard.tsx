@@ -23,7 +23,7 @@ export function BookCard({ book }: { book: Book }) {
       >
         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted shadow-card">
           <img
-            src={book.cover_url}
+            src={book.cover_url?.replace('http://', 'https://')}
             alt={book.title ?? "Book Cover"}
             loading="lazy"
             className="w-full h-full object-cover group-active:scale-[0.98] transition-transform"

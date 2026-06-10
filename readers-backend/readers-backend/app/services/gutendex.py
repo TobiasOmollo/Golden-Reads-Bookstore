@@ -54,6 +54,7 @@ async def _get_google_books_cover(client: httpx.AsyncClient, title: str, author:
 
 async def resolve_cover(isbn: str, gutenberg_id: int) -> str:
     isbn_clean = (isbn or "").strip().replace("-", "")
+    url = None
     if isbn_clean:
         # 1. Google Books API (primary)
         google_url = "https://www.googleapis.com/books/v1/volumes"
@@ -68,17 +69,20 @@ async def resolve_cover(isbn: str, gutenberg_id: int) -> str:
                         image_links = volume_info.get("imageLinks", {})
                         cover_url = image_links.get("thumbnail") or image_links.get("smallThumbnail")
                         if cover_url:
-                            if cover_url.startswith("http://"):
-                                cover_url = cover_url.replace("http://", "https://")
-                            return cover_url
+                            url = cover_url
         except Exception as e:
             print(f"Error querying Google Books API for ISBN {isbn_clean}: {e}")
 
         # 2. Open Library (secondary fallback)
-        return f"https://covers.openlibrary.org/b/isbn/{isbn_clean}-L.jpg"
+        if not url:
+            url = f"https://covers.openlibrary.org/b/isbn/{isbn_clean}-L.jpg"
+    else:
+        # 3. Internet Archive (final fallback)
+        url = f"https://archive.org/services/img/{gutenberg_id}"
 
-    # 3. Internet Archive (final fallback)
-    return f"https://archive.org/services/img/{gutenberg_id}"
+    if url and url.startswith("http://"):
+        url = url.replace("http://", "https://", 1)
+    return url
 
 
 class GutendexService:

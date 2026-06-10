@@ -275,23 +275,6 @@ class BookAggregatorService:
                 if isinstance(res, list):
                     all_books.extend(res)
                     
-            # Deduplicate by Title
-            seen: Dict[str, dict] = {}
-            for book in all_books:
-                title_str = book.get("title", "")
-                clean_title = get_clean_title(title_str)
-                if not clean_title:
-                    continue
-                
-                score = get_fidelity_score(book)
-                
-                if clean_title not in seen:
-                    seen[clean_title] = (book, score)
-                else:
-                    prev_book, prev_score = seen[clean_title]
-                    if score > prev_score:
-                        seen[clean_title] = (book, score)
-                        
-            return [item[0] for item in seen.values()]
+            return all_books
 
 book_aggregator_service = BookAggregatorService()

@@ -8,15 +8,16 @@ export function cn(...inputs: ClassValue[]) {
 export function resolveCover(book: { cover?: string; cover_url?: string; gutendexId?: number; id?: string }): string {
   // 0. If cover_url is present, use it directly
   if (book.cover_url && book.cover_url.startsWith('http')) {
-    return book.cover_url;
+    return book.cover_url.replace('http://', 'https://');
   }
   // 1. If cover is a full valid URL already, use it directly
   if (book.cover && book.cover.startsWith('http')) {
+    let cover = book.cover;
     // Append default=false to Open Library covers to trigger onError fallback
-    if (book.cover.includes('covers.openlibrary.org') && !book.cover.includes('default=false')) {
-      return `${book.cover}${book.cover.includes('?') ? '&' : '?'}default=false`;
+    if (cover.includes('covers.openlibrary.org') && !cover.includes('default=false')) {
+      cover = `${cover}${cover.includes('?') ? '&' : '?'}default=false`;
     }
-    return book.cover;
+    return cover.replace('http://', 'https://');
   }
   // 2. Try Open Library with the Gutendex numeric ID as OLID
   if (book.gutendexId) {
