@@ -85,7 +85,7 @@ export function CartDrawer() {
                         <p className="font-semibold text-sm line-clamp-1">{book.title}</p>
                         <p className="text-xs text-muted-foreground line-clamp-1">{book.author}</p>
                         <p className="font-mono text-xs mt-1 text-gold font-bold">
-                          {formatKES(book.price)}
+                          {formatKES(book.price ?? 0.0)}
                         </p>
                         <div className="flex items-center gap-2 mt-2">
                           <button

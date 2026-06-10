@@ -22,7 +22,12 @@ export const Route = createFileRoute("/")({
 });
 
 function byGenre(books: Book[], g: string) {
-  return books.filter((b) => b.genre.includes(g));
+  return books.filter((b) => {
+    if (Array.isArray(b.genre)) {
+      return b.genre.includes(g);
+    }
+    return typeof b.genre === "string" && b.genre.includes(g);
+  });
 }
 
 function HomePage() {
@@ -35,13 +40,13 @@ function HomePage() {
 
   const sections: { title: string; href: string; books: Book[] }[] = [
     { title: "Trending Now", href: "/discover", books: books.slice(0, 10) },
-    { title: "Best Sellers", href: "/discover", books: [...books].sort((a, b) => b.rating - a.rating).slice(0, 10) },
+    { title: "Best Sellers", href: "/discover", books: [...books].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 10) },
     { title: "New Releases", href: "/discover", books: [...books].reverse().slice(0, 10) },
     { title: "Recommended For You", href: "/discover", books: books.slice(4, 14) },
     { title: "Technology Books", href: "/discover", books: byGenre(books, "Technology") },
     { title: "Business Books", href: "/discover", books: byGenre(books, "Business") },
     { title: "Fiction Collection", href: "/discover", books: byGenre(books, "Fiction") },
-    { title: "Audiobooks", href: "/discover", books: books.filter((b) => b.formats.includes("audio")).slice(0, 10) },
+    { title: "Audiobooks", href: "/discover", books: books.filter((b) => b.formats?.includes("audio")).slice(0, 10) },
   ];
 
   return (

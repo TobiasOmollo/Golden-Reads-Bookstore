@@ -89,7 +89,7 @@ function WishlistPage() {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-sm line-clamp-1">{book.title}</p>
                   <p className="text-xs text-muted-foreground line-clamp-1">{book.author}</p>
-                  <p className="font-mono text-[11px] mt-1 text-gold font-bold">{formatKES(book.price)}</p>
+                  <p className="font-mono text-[11px] mt-1 text-gold font-bold">{formatKES(book.price ?? 0.0)}</p>
                 </div>
               </Link>
               <div className="flex flex-col gap-1.5">

@@ -5,7 +5,11 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function resolveCover(book: { cover?: string; gutendexId?: number; id?: string }): string {
+export function resolveCover(book: { cover?: string; cover_url?: string; gutendexId?: number; id?: string }): string {
+  // 0. If cover_url is present, use it directly
+  if (book.cover_url && book.cover_url.startsWith('http')) {
+    return book.cover_url;
+  }
   // 1. If cover is a full valid URL already, use it directly
   if (book.cover && book.cover.startsWith('http')) {
     // Append default=false to Open Library covers to trigger onError fallback

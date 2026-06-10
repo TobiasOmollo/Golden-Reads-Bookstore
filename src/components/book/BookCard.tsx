@@ -23,7 +23,7 @@ export function BookCard({ book }: { book: Book }) {
       >
         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted shadow-card">
           <img
-            src={resolveCover(book)}
+            src={book.cover_url}
             alt={book.title}
             loading="lazy"
             className="w-full h-full object-cover group-active:scale-[0.98] transition-transform"
@@ -53,10 +53,10 @@ export function BookCard({ book }: { book: Book }) {
         <div className="flex items-center justify-between mt-1">
           <div className="flex items-center gap-0.5 text-gold">
             <Star size={11} fill="currentColor" strokeWidth={0} />
-            <span className="font-mono text-[10px] text-foreground">{book.rating}</span>
+            <span className="font-mono text-[10px] text-foreground">{book.rating ?? 4.5}</span>
           </div>
           <span className="font-mono text-[10px] font-bold text-foreground">
-            {formatKES(book.price)}
+            {formatKES(book.price ?? 0.0)}
           </span>
         </div>
       </Link>

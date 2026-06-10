@@ -50,7 +50,7 @@ export const useCart = create<CartState>()(
       close: () => set({ isOpen: false }),
       toggle: () => set((s) => ({ isOpen: !s.isOpen })),
       count: () => get().items.reduce((n, i) => n + i.qty, 0),
-      subtotal: () => get().items.reduce((n, i) => n + i.qty * i.book.price, 0),
+      subtotal: () => get().items.reduce((n, i) => n + i.qty * (i.book.price ?? 0), 0),
     }),
     { name: "gr-cart" },
   ),

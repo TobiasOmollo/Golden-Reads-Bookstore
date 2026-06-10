@@ -94,3 +94,13 @@ class ExplainRequest(BaseModel):
 
 class ExplainResponse(BaseModel):
     explanation: str
+
+class UnifiedBook(BaseModel):
+    id: str
+    title: str
+    author: str
+    cover_url: str
+    epub_url: str
+    description: str
+    genre: str
+

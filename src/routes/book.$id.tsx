@@ -56,10 +56,11 @@ function BookDetail() {
   const [highlightedText, setHighlightedText] = useState<{ text: string; context: string } | null>(null);
 
 
+  const firstGenre = Array.isArray(book?.genre) ? book?.genre[0] : (book?.genre || "");
   const { data: rawSimilar = [] } = useQuery<Book[]>({
-    queryKey: ["books", "similar", book?.genre?.[0] || ""],
-    queryFn: () => api.books.search("", book?.genre?.[0] || ""),
-    enabled: !!book?.genre?.[0],
+    queryKey: ["books", "similar", firstGenre],
+    queryFn: () => api.books.search("", firstGenre),
+    enabled: !!firstGenre,
   });
 
   if (!book) {
@@ -117,7 +118,7 @@ function BookDetail() {
           className="px-5 -mt-6 relative"
         >
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {book.genre.map((g) => (
+            {(Array.isArray(book.genre) ? book.genre : book.genre ? [book.genre] : []).map((g) => (
               <span key={g} className="font-mono text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold">
                 {g}
               </span>
@@ -132,12 +133,12 @@ function BookDetail() {
                 <Star
                   key={i}
                   size={14}
-                  fill={i < Math.round(book.rating) ? "currentColor" : "none"}
+                  fill={i < Math.round(book.rating ?? 4.5) ? "currentColor" : "none"}
                   className="text-gold"
                   strokeWidth={1.5}
                 />
               ))}
-              <span className="font-mono text-xs ml-1">{book.rating}</span>
+              <span className="font-mono text-xs ml-1">{book.rating ?? 4.5}</span>
             </div>
             <span className="text-muted-foreground text-xs">· 2,431 reviews</span>
           </div>
@@ -153,12 +154,12 @@ function BookDetail() {
           </button>
 
           <div className="grid grid-cols-3 gap-2 mt-5">
-            <Stat icon={<Clock size={14} />} label="Reading" value={book.readingTime} />
-            <Stat icon={<BookOpen size={14} />} label="Pages" value={`${book.pages}`} />
+            <Stat icon={<Clock size={14} />} label="Reading" value={String(book.readingTime ?? "120 min")} />
+            <Stat icon={<BookOpen size={14} />} label="Pages" value={`${book.pages ?? 300}`} />
             <Stat
               icon={<Headphones size={14} />}
               label="Format"
-              value={book.formats.includes("audio") ? "Audio + Ebook" : "Ebook"}
+              value={book.formats?.includes("audio") ? "Audio + Ebook" : "Ebook"}
             />
           </div>
 
@@ -236,7 +237,7 @@ function BookDetail() {
         <div className="max-w-md mx-auto px-5 py-3 flex items-center gap-2">
           <div className="flex-1">
             <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Price</p>
-            <p className="font-display text-xl font-semibold text-gold">{formatKES(book.price)}</p>
+            <p className="font-display text-xl font-semibold text-gold">{formatKES(book.price ?? 0.0)}</p>
           </div>
           <button
             onClick={() => wish.toggle(book)}

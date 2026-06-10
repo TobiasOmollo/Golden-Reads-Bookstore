@@ -1,8 +1,9 @@
 import httpx
 from fastapi import APIRouter, Query, HTTPException, Response
 from typing import List, Optional
-from app.models.schemas import Book
+from app.models.schemas import Book, UnifiedBook
 from app.services.gutendex import gutendex_service
+from app.services.book_aggregator import book_aggregator_service
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
@@ -60,29 +61,63 @@ FALLBACK_CLASSICS = [
     )
 ]
 
-@router.get("/search", response_model=List[Book])
+FALLBACK_UNIFIED_CLASSICS = [
+    UnifiedBook(
+        id="g1342",
+        title="Pride and Prejudice",
+        author="Jane Austen",
+        cover_url="https://www.gutenberg.org/cache/epub/1342/pg1342.cover.medium.jpg",
+        epub_url="https://www.gutenberg.org/ebooks/1342.epub3.images",
+        description="Pride and Prejudice is a romantic novel of manners written by Jane Austen in 1813.",
+        genre="Fiction"
+    ),
+    UnifiedBook(
+        id="g1497",
+        title="The Republic",
+        author="Plato",
+        cover_url="https://www.gutenberg.org/cache/epub/1497/pg1497.cover.medium.jpg",
+        epub_url="https://www.gutenberg.org/ebooks/1497.epub3.images",
+        description="The Republic is a Socratic dialogue, authored by Plato around 375 BC, concerning justice.",
+        genre="Philosophy"
+    ),
+    UnifiedBook(
+        id="g84",
+        title="Frankenstein; Or, The Modern Prometheus",
+        author="Mary Wollstonecraft Shelley",
+        cover_url="https://www.gutenberg.org/cache/epub/84/pg84.cover.medium.jpg",
+        epub_url="https://www.gutenberg.org/ebooks/84.epub3.images",
+        description="Frankenstein; or, The Modern Prometheus is an 1818 novel written by English author Mary Shelley.",
+        genre="Fiction"
+    )
+]
+
+@router.get("/search", response_model=List[UnifiedBook])
 async def search_books(
     q: Optional[str] = Query(None, description="Search term for title or author"),
     genre: Optional[str] = Query(None, description="Genre tag matching the GENRE_MAP"),
     page: int = Query(1, ge=1, description="Page number")
 ):
     try:
-        results = await gutendex_service.search_books(query=q, genre=genre, page=page)
+        search_query = q or genre
+        results = await book_aggregator_service.aggregate_books(query=search_query)
         if not results:
-            return FALLBACK_CLASSICS
+            return FALLBACK_UNIFIED_CLASSICS
         return results
-    except Exception:
-        return FALLBACK_CLASSICS
+    except Exception as e:
+        print(f"Error in search_books: {e}")
+        return FALLBACK_UNIFIED_CLASSICS
 
-@router.get("/trending", response_model=List[Book])
+@router.get("/trending", response_model=List[UnifiedBook])
 async def get_trending():
     try:
-        results = await gutendex_service.get_trending_books()
+        results = await book_aggregator_service.aggregate_books(query=None)
         if not results:
-            return FALLBACK_CLASSICS
+            return FALLBACK_UNIFIED_CLASSICS
         return results
-    except Exception:
-        return FALLBACK_CLASSICS
+    except Exception as e:
+        print(f"Error in get_trending: {e}")
+        return FALLBACK_UNIFIED_CLASSICS
+
 
 @router.get("/{id}", response_model=Book)
 async def get_book_by_id(id: str):
