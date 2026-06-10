@@ -12,29 +12,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Allow localhost origins + configured origins
-origins = [
-    'http://localhost:3000',
-    'http://localhost:4000',
-    'http://localhost:5173',
-    'http://localhost:8080',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:4000',
-    'http://127.0.0.1:5173',
-]
-
-# Add custom CORS origins configured in settings/environment
-for origin in settings.cors_origins_list:
-    if origin not in origins:
-        origins.append(origin)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "https://golden-reads-bookstore.vercel.app",
+    ],
+    allow_origin_regex=r"https://golden-reads-bookstore.*\.vercel\.app",
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/")

@@ -16,6 +16,7 @@ export interface Book {
   read_url?: string;
   epub_url?: string;
   download_url?: string;
+  download_count?: number;
   
   authors?: any[];
   genres?: string[];
