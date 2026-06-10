@@ -4,15 +4,25 @@ from typing import List, Optional
 class Book(BaseModel):
     id: str
     title: str
-    author: str
-    cover: str
-    rating: float
-    price: float
-    genre: List[str]
-    description: str
-    pages: int
-    readingTime: int  # in minutes
-    formats: List[str]
+    author: str = "Unknown Author"
+    cover: str = ""
+    rating: float = 4.5
+    price: float = 0.0
+    genre: List[str] = []
+    description: str = ""
+    pages: int = 150
+    readingTime: int = 120  # in minutes
+    formats: List[str] = []
+    
+    # New fields returned by single-pass mapping:
+    cover_url: Optional[str] = ""
+    authors: Optional[List[str]] = []
+    genres: Optional[List[str]] = []
+    language: Optional[str] = ""
+    pdf_url: Optional[str] = ""
+    preview_link: Optional[str] = ""
+    download_count: Optional[int] = 0
+    
     gutendexId: Optional[int] = None
     librivoxId: Optional[int] = None
     read_url: Optional[str] = ""
@@ -48,10 +58,23 @@ class AudiobookChapter(BaseModel):
 class AudiobookDetail(BaseModel):
     id: str
     title: str
-    author: str
     description: str
-    cover: str
-    chapters: List[AudiobookChapter]
+    author: str = "Unknown Author"
+    cover: str = ""
+    chapters: List[AudiobookChapter] = []
+    
+    # New fields returned by single-pass mapping:
+    authors: List[str] = []
+    genres: List[str] = []
+    language: str = ""
+    duration: str = ""
+    cover_url: str = ""
+    listen_url: str = ""
+    stream_url: str = ""
+    librivox_url: str = ""
+    num_sections: str = "0"
+
+Audiobook = AudiobookDetail
 
 # Podcast Search Result
 class PodcastChannel(BaseModel):
@@ -98,9 +121,9 @@ class ExplainResponse(BaseModel):
 class UnifiedBook(BaseModel):
     id: str
     title: str
-    author: str
-    cover_url: str
-    epub_url: str
-    description: str
-    genre: str
+    author: str = "Unknown Author"
+    cover_url: str = ""
+    epub_url: str = ""
+    description: str = ""
+    genre: str = "Fiction"
 

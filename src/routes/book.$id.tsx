@@ -11,7 +11,7 @@ import { useWishlist } from "@/store/wishlist";
 import { useLibrary } from "@/store/library";
 import { formatKES } from "@/lib/format";
 import { api } from "@/lib/api/client";
-import { resolveCover } from "@/lib/utils";
+import { safeCoverUrl } from "@/lib/utils";
 import type { Book } from "@/types";
 import BookReader from "@/components/book/BookReader";
 import AiAssistant from "@/components/ai/AiAssistant";
@@ -85,7 +85,7 @@ function BookDetail() {
           className="relative w-full h-[60vw] max-h-[420px] bg-muted overflow-hidden"
         >
           <img
-            src={resolveCover(book)}
+            src={safeCoverUrl(book.cover_url || book.cover) || '/placeholder-book.png'}
             alt={book.title ?? "Book Cover"}
             className="w-full h-full object-cover"
             onError={(e) => {
@@ -118,14 +118,14 @@ function BookDetail() {
           className="px-5 -mt-6 relative"
         >
           <div className="flex flex-wrap gap-1.5 mb-3">
-            {(Array.isArray(book.genre) ? book.genre : book.genre ? [book.genre] : []).map((g) => (
+            {(Array.isArray(book.genre) ? book.genre : Array.isArray(book.genres) ? book.genres : book.genre ? [book.genre] : []).map((g) => (
               <span key={g} className="font-mono text-[10px] uppercase tracking-wider px-2.5 py-1 rounded-full bg-gold/15 text-gold">
                 {g}
               </span>
             ))}
           </div>
           <h1 className="font-display text-[26px] font-semibold leading-tight">{book.title ?? "Untitled Book"}</h1>
-          <p className="font-serif italic text-[18px] text-muted-foreground mt-1">{book.author}</p>
+          <p className="font-serif italic text-[18px] text-muted-foreground mt-1">{book.author ?? "Unknown Author"}</p>
 
           <div className="flex items-center gap-3 mt-3">
             <div className="flex items-center gap-1">
@@ -141,6 +141,9 @@ function BookDetail() {
               <span className="font-mono text-xs ml-1">{book.rating ?? 4.5}</span>
             </div>
             <span className="text-muted-foreground text-xs">· 2,431 reviews</span>
+            {book.download_count !== undefined && book.download_count > 0 && (
+              <span className="text-muted-foreground text-xs">· {(book.download_count ?? 0).toLocaleString()} downloads</span>
+            )}
           </div>
 
           <p className={`mt-4 text-[15px] leading-relaxed text-foreground/85 ${expanded ? "" : "line-clamp-3"}`}>

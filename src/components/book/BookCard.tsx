@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import type { Book } from "@/types/api";
 import { useCart } from "@/store/cart";
 import { formatKES } from "@/lib/format";
-import { resolveCover } from "@/lib/utils";
+import { safeCoverUrl } from "@/lib/utils";
 
 export function BookCard({ book }: { book: Book }) {
   const add = useCart((s) => s.add);
@@ -23,16 +23,11 @@ export function BookCard({ book }: { book: Book }) {
       >
         <div className="relative aspect-[2/3] rounded-xl overflow-hidden bg-muted shadow-card">
           <img
-            src={book.cover_url?.replace('http://', 'https://')}
-            alt={book.title ?? "Book Cover"}
+            src={book.cover_url || '/placeholder-book.png'}
+            alt={book.title ?? 'Book cover'}
             loading="lazy"
             className="w-full h-full object-cover group-active:scale-[0.98] transition-transform"
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (!target.src.endsWith('/placeholder-cover.jpg')) {
-                target.src = '/placeholder-cover.jpg';
-              }
-            }}
+            onError={(e) => { e.currentTarget.style.display = 'none' }}
           />
           <button
             type="button"
@@ -51,9 +46,16 @@ export function BookCard({ book }: { book: Book }) {
         </h3>
         <p className="text-[11px] text-muted-foreground line-clamp-1">{book.author ?? "Unknown Author"}</p>
         <div className="flex items-center justify-between mt-1">
-          <div className="flex items-center gap-0.5 text-gold">
-            <Star size={11} fill="currentColor" strokeWidth={0} />
-            <span className="font-mono text-[10px] text-foreground">{book.rating ?? 4.5}</span>
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5 text-gold">
+              <Star size={11} fill="currentColor" strokeWidth={0} />
+              <span className="font-mono text-[10px] text-foreground">{book.rating ?? 4.5}</span>
+            </div>
+            {book.download_count !== undefined && book.download_count > 0 && (
+              <span className="font-mono text-[9px] text-muted-foreground select-none">
+                ({(book.download_count ?? 0).toLocaleString()})
+              </span>
+            )}
           </div>
           <span className="font-mono text-[10px] font-bold text-foreground">
             {formatKES(book.price ?? 0.0)}

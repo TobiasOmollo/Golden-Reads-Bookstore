@@ -1,6 +1,6 @@
 import type { Book, Article, Episode, Flashcard, AudiobookDetail } from "@/types";
 
-const BASE = import.meta.env.VITE_API_URL || "https://readers-backend.onrender.com";
+const BASE = import.meta.env.VITE_API_URL;
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`);
@@ -34,6 +34,7 @@ export function normalizeBook(raw: any): Book {
     subjects: raw.subjects ?? [],
     bookshelves: raw.bookshelves ?? [],
     languages: raw.languages ?? [],
+    download_count: raw.download_count ?? 0,
   };
 }
 
@@ -51,6 +52,7 @@ export function normalizeAudiobook(raw: any): AudiobookDetail {
     url_zip_file: raw.url_zip_file ?? null,
     num_sections: raw.num_sections ?? 0,
     language: raw.language ?? '',
+    url_rss: raw.url_rss ?? '',
   };
 }
 
@@ -127,7 +129,11 @@ export const api = {
       return post<Flashcard[]>(`/ai/flashcards`, { text });
     },
     recommend: async (genres: string[], history: string[]): Promise<{ recommendations: Book[]; reasoning: string }> => {
-      return post<{ recommendations: Book[]; reasoning: string }>(`/ai/recommend`, { genres, history });
+      const res = await post<{ recommendations: Book[]; reasoning: string }>(`/ai/recommend`, { genres, history });
+      return {
+        recommendations: (res.recommendations || []).map(normalizeBook),
+        reasoning: res.reasoning ?? "",
+      };
     },
     explain: async (passage: string, context: string): Promise<{ explanation: string }> => {
       return post<{ explanation: string }>(`/ai/explain`, { passage, context });

@@ -8,7 +8,7 @@ import { useQueries } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import type { Book } from "@/types";
 import { formatKES } from "@/lib/format";
-import { resolveCover } from "@/lib/utils";
+import { safeCoverUrl } from "@/lib/utils";
 
 export const Route = createFileRoute("/wishlist")({
   head: () => ({
@@ -79,7 +79,7 @@ function WishlistPage() {
                 className="flex items-center gap-3 flex-1 min-w-0"
               >
                 <img
-                  src={resolveCover(book)}
+                  src={safeCoverUrl(book.cover_url || book.cover) || '/placeholder-book.png'}
                   alt={book.title}
                   className="w-14 h-20 rounded-lg object-cover bg-muted shrink-0"
                   onError={(e) => {

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Sparkles, X, BrainCircuit, MessageSquareText, Layers, ThumbsUp, ChevronRight, HelpCircle, RefreshCw } from "lucide-react";
 import { Flashcard, Book } from "@/types";
 import { api } from "@/lib/api/client";
-import { resolveCover } from "@/lib/utils";
+import { safeCoverUrl } from "@/lib/utils";
 
 interface AiAssistantProps {
   onClose: () => void;
@@ -401,7 +401,7 @@ export default function AiAssistant({
                 {aiRecs.map(book => (
                   <div key={book.id} className="p-3.5 bg-[#11131c] border border-slate-800/80 rounded flex gap-3.5 items-center hover:border-indigo-500/30 transition-all">
                     <img
-                      src={resolveCover(book)}
+                      src={safeCoverUrl(book.cover_url || book.cover) || '/placeholder-book.png'}
                       alt={book.title}
                       className="w-10 h-14 rounded object-cover border border-slate-800 referrerPolicy='no-referrer'"
                       onError={(e) => {

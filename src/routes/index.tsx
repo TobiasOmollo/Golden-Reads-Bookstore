@@ -23,10 +23,14 @@ export const Route = createFileRoute("/")({
 
 function byGenre(books: Book[], g: string) {
   return books.filter((b) => {
-    if (Array.isArray(b.genre)) {
-      return b.genre?.includes?.(g) ?? false;
-    }
-    return typeof b.genre === "string" && (b.genre?.includes?.(g) ?? false);
+    const genres = Array.isArray(b.genre)
+      ? b.genre
+      : Array.isArray(b.genres)
+        ? b.genres
+        : typeof b.genre === "string"
+          ? [b.genre]
+          : [];
+    return genres.includes(g);
   });
 }
 

@@ -6,7 +6,7 @@ import { useLibrary } from "@/store/library";
 import { useQueries } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import type { Book } from "@/types";
-import { resolveCover } from "@/lib/utils";
+import { safeCoverUrl } from "@/lib/utils";
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -105,7 +105,7 @@ function LibraryPage() {
               className="flex items-center gap-3 px-5 py-3.5 active:bg-muted/50"
             >
               <img
-                src={resolveCover(book)}
+                src={safeCoverUrl(book.cover_url || book.cover) || '/placeholder-book.png'}
                 alt={book.title}
                 className="w-14 h-20 rounded-lg object-cover bg-muted shrink-0"
                 onError={(e) => {

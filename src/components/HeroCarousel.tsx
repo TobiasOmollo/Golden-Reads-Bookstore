@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star } from "lucide-react";
 import type { Book } from "@/types/api";
-import { resolveCover } from "@/lib/utils";
+import { safeCoverUrl } from "@/lib/utils";
 
 export function HeroCarousel({ books }: { books: Book[] }) {
   const [index, setIndex] = useState(0);
@@ -28,7 +28,7 @@ export function HeroCarousel({ books }: { books: Book[] }) {
             className="absolute inset-0"
           >
             <img
-              src={resolveCover(book)}
+              src={safeCoverUrl(book.cover_url || book.cover) || '/placeholder-book.png'}
               alt={book.title}
               className="w-full h-full object-cover"
               onError={(e) => {
