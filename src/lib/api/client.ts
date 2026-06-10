@@ -23,7 +23,10 @@ export const api = {
     discover: (q: string) => get<Book[]>(`/books/search?q=${encodeURIComponent(q)}`),
     trending: () => get<Book[]>('/books/trending'),
     search: (q: string, genre = ""): Promise<Book[]> => get<Book[]>(`/books/search?q=${encodeURIComponent(q)}&genre=${encodeURIComponent(genre)}`),
-    detail: (id: string): Promise<Book> => get<Book>(`/books/${id}`),
+    detail: (id: string): Promise<Book> => {
+      const cleanId = id.startsWith('g') ? id.slice(1) : id;
+      return get<Book>(`/books/${cleanId}`);
+    },
     coverUrl: (id: string, openLibraryId?: string | number) =>
       openLibraryId
         ? `https://covers.openlibrary.org/b/id/${openLibraryId}-L.jpg`
