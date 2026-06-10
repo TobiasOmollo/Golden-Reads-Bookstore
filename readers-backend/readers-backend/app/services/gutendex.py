@@ -101,8 +101,12 @@ class GutendexService:
         self._cache[key] = (data, time.time() + self.ttl)
 
     def _map_genres(self, subjects: List[str]) -> List[str]:
+        if not subjects or not isinstance(subjects, list):
+            return ["Fiction"]
         mapped = set()
         for subject in subjects:
+            if not subject or not isinstance(subject, str):
+                continue
             for genre, keywords in GENRE_MAP.items():
                 for keyword in keywords:
                     if keyword.lower() in subject.lower():
@@ -113,14 +117,17 @@ class GutendexService:
         return list(mapped)
 
     async def _resolve_cover_url(self, client: httpx.AsyncClient, item: dict) -> str:
-        isbn = item.get("isbn", "").strip()
-        gutenberg_id = item.get("id", 0)
+        isbn = item.get("isbn") or ""
+        isbn = isbn.strip() if isinstance(isbn, str) else ""
+        gutenberg_id = item.get("id", 0) or 0
         
         # If no explicit ISBN is in the Gutendex item, attempt Google Books title/author enrichment
         if not isbn:
-            title = item.get("title", "")
-            authors = item.get("authors", [])
-            author = authors[0].get("name", "") if authors else ""
+            title = item.get("title") or ""
+            authors = item.get("authors") or []
+            author = ""
+            if authors and isinstance(authors, list) and isinstance(authors[0], dict):
+                author = authors[0].get("name") or ""
             if "," in author:
                 parts = author.split(",")
                 author = f"{parts[1].strip()} {parts[0].strip()}"
@@ -133,19 +140,25 @@ class GutendexService:
 
 
     def _convert_to_book(self, item: dict, cover_url: str) -> Book:
-        authors = item.get("authors", [])
-        author_name = authors[0].get("name", "Unknown Author") if authors else "Unknown Author"
-        
-        # Reformating 'LastName, FirstName' to 'FirstName LastName' for aesthetics
-        if "," in author_name:
-            parts = author_name.split(",")
-            author_name = f"{parts[1].strip()} {parts[0].strip()}"
+        authors = item.get("authors") or []
+        author_name = "Unknown Author"
+        if authors and isinstance(authors, list) and isinstance(authors[0], dict):
+            name = authors[0].get("name") or "Unknown Author"
+            
+            # Reformating 'LastName, FirstName' to 'FirstName LastName' for aesthetics
+            if "," in name:
+                parts = name.split(",")
+                author_name = f"{parts[1].strip()} {parts[0].strip()}"
+            else:
+                author_name = name
 
-        gid = item.get("id")
-        formats_dict = item.get("formats", {})
-        epub_url = formats_dict.get("application/epub+zip") or ""
-        html_url = formats_dict.get("text/html") or ""
-        text_url = formats_dict.get("text/plain; charset=us-ascii") or formats_dict.get("text/plain") or ""
+        gid = item.get("id") or 0
+        formats_dict = item.get("formats") or {}
+        epub_url = formats_dict.get("application/epub+zip") or "" if isinstance(formats_dict, dict) else ""
+        html_url = formats_dict.get("text/html") or "" if isinstance(formats_dict, dict) else ""
+        text_url = ""
+        if isinstance(formats_dict, dict):
+            text_url = formats_dict.get("text/plain; charset=us-ascii") or formats_dict.get("text/plain") or ""
 
         # Aggregate available readable formats
         formats = []
@@ -156,29 +169,33 @@ class GutendexService:
         if text_url:
             formats.append("text")
 
-        subjects = item.get("subjects", [])
+        subjects = item.get("subjects") or []
         genres = self._map_genres(subjects)
 
         # Estimate pages based on Gutenberg download counts and arbitrary text length
-        pages = max(100, int((gid % 400) + 120))
+        pages = max(100, int((gid % 400) + 120)) if gid else 150
         reading_time = max(90, int(pages * 1.5))
 
         # Generate a semi-realistic rating and price based on Gutenberg ID
-        rating_seed = (gid % 15) / 10.0
+        rating_seed = (gid % 15) / 10.0 if gid else 0.5
         rating = round(3.5 + rating_seed, 1) if rating_seed <= 1.5 else 4.5
-        price_seed = (gid % 30)
+        price_seed = (gid % 30) if gid else 15
         price = 0.0 if price_seed < 10 else round(2.99 + (price_seed * 0.4), 2)
 
-        description = ", ".join(subjects) if subjects else f"A classic book of the genre {', '.join(genres)}."
+        description = ", ".join(subjects) if subjects and isinstance(subjects, list) else f"A classic book of the genre {', '.join(genres)}."
 
         # Extract read, epub and download URLs from Gutenberg formats dict
-        read_url_extracted = formats_dict.get("text/html") or formats_dict.get("text/plain; charset=us-ascii") or formats_dict.get("text/plain") or ""
-        epub_url_extracted = formats_dict.get("application/epub+zip") or ""
-        download_url_extracted = formats_dict.get("text/plain; charset=utf-8") or formats_dict.get("text/plain") or ""
+        read_url_extracted = ""
+        epub_url_extracted = ""
+        download_url_extracted = ""
+        if isinstance(formats_dict, dict):
+            read_url_extracted = formats_dict.get("text/html") or formats_dict.get("text/plain; charset=us-ascii") or formats_dict.get("text/plain") or ""
+            epub_url_extracted = formats_dict.get("application/epub+zip") or ""
+            download_url_extracted = formats_dict.get("text/plain; charset=utf-8") or formats_dict.get("text/plain") or ""
 
         return Book(
             id=f"g{gid}",
-            title=item.get("title", "Untitled Book"),
+            title=item.get("title") or "Untitled Book",
             author=author_name,
             cover=cover_url,
             rating=rating,

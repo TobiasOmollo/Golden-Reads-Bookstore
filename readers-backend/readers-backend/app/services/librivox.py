@@ -10,18 +10,21 @@ class LibriVoxService:
         self._cache: Dict[str, AudiobookDetail] = {}
 
     def _get_author_name(self, book_data: dict) -> str:
-        authors = book_data.get("authors", [])
-        if not authors:
+        authors = book_data.get("authors") or []
+        if not authors or not isinstance(authors, list):
             return "Unknown Author"
         auth = authors[0]
-        first_name = auth.get("first_name", "").strip()
-        last_name = auth.get("last_name", "").strip()
+        if not isinstance(auth, dict):
+            return "Unknown Author"
+        first_name = auth.get("first_name", "").strip() if auth.get("first_name") else ""
+        last_name = auth.get("last_name", "").strip() if auth.get("last_name") else ""
         if first_name and last_name:
             return f"{first_name} {last_name}"
         return last_name or first_name or "Unknown Author"
 
     def _resolve_cover(self, book_data: dict) -> str:
-        isbn = book_data.get("isbn", "").strip().replace("-", "")
+        isbn = book_data.get("isbn") or ""
+        isbn = isbn.strip().replace("-", "") if isinstance(isbn, str) else ""
         book_id = book_data.get("id", "audiobook")
         if isbn:
             return f"https://covers.openlibrary.org/b/isbn/{isbn}-L.jpg"
@@ -57,10 +60,14 @@ class LibriVoxService:
                     cover = self._resolve_cover(item)
                     
                     # Parse sections (chapters)
-                    sections = item.get("sections", [])
+                    sections = item.get("sections") or []
+                    if not isinstance(sections, list):
+                        sections = []
                     chapters = []
                     for s in sections:
-                        sec_id = str(s.get("id") or s.get("section_number"))
+                        if not isinstance(s, dict):
+                            continue
+                        sec_id = str(s.get("id") or s.get("section_number") or "")
                         sec_title = s.get("title") or f"Chapter {s.get('section_number')}"
                         duration_str = s.get("playtime") or "0"
                         
@@ -79,9 +86,9 @@ class LibriVoxService:
 
                         # Extract listen_url or fallback
                         listen_url = s.get("listen_url", "")
-                        if not listen_url and item.get("url_zip_file"):
-                            # Mock or build file URL if LibriVox behaves weirdly
-                            listen_url = item.get("url_zip_file")
+                        item_zip = item.get("url_zip_file") or ""
+                        if not listen_url and item_zip:
+                            listen_url = item_zip
 
                         chapters.append(AudiobookChapter(
                             id=sec_id,
@@ -135,10 +142,14 @@ class LibriVoxService:
                         item = books_list[0]
                         author = self._get_author_name(item)
                         cover = self._resolve_cover(item)
-                        sections = item.get("sections", [])
+                        sections = item.get("sections") or []
+                        if not isinstance(sections, list):
+                            sections = []
                         chapters = []
                         for s in sections:
-                            sec_id = str(s.get("id") or s.get("section_number"))
+                            if not isinstance(s, dict):
+                                continue
+                            sec_id = str(s.get("id") or s.get("section_number") or "")
                             sec_title = s.get("title") or f"Chapter {s.get('section_number')}"
                             duration_str = s.get("playtime") or "0"
                             duration = 0

@@ -23,14 +23,14 @@ export const Route = createFileRoute("/book/$id")({
     const book = loaderData;
     return {
       meta: [
-        { title: book ? `${book.title} – Golden Reads` : "Book – Golden Reads" },
+        { title: book ? `${book.title ?? "Untitled Book"} – Golden Reads` : "Book – Golden Reads" },
         {
           name: "description",
-          content: book ? book.description.slice(0, 155) : "Book details on Golden Reads.",
+          content: book ? (book.description || "").slice(0, 155) : "Book details on Golden Reads.",
         },
-        { property: "og:title", content: book?.title ?? "Golden Reads" },
-        { property: "og:description", content: book?.description.slice(0, 155) ?? "" },
-        ...(book ? [{ property: "og:image", content: book.cover }] : []),
+        { property: "og:title", content: book?.title || "Golden Reads" },
+        { property: "og:description", content: (book?.description || "").slice(0, 155) },
+        ...(book ? [{ property: "og:image", content: book.cover || "" }] : []),
         { property: "og:type", content: "product" },
       ],
     };
@@ -86,7 +86,7 @@ function BookDetail() {
         >
           <img
             src={resolveCover(book)}
-            alt={book.title}
+            alt={book.title ?? "Book Cover"}
             className="w-full h-full object-cover"
             onError={(e) => {
               e.currentTarget.style.display = "none";
@@ -124,7 +124,7 @@ function BookDetail() {
               </span>
             ))}
           </div>
-          <h1 className="font-display text-[26px] font-semibold leading-tight">{book.title}</h1>
+          <h1 className="font-display text-[26px] font-semibold leading-tight">{book.title ?? "Untitled Book"}</h1>
           <p className="font-serif italic text-[18px] text-muted-foreground mt-1">{book.author}</p>
 
           <div className="flex items-center gap-3 mt-3">
@@ -282,7 +282,7 @@ function BookDetail() {
             setHighlightedText(null);
           }}
           activeBookId={book.id}
-          activeBookTitle={book.title}
+          activeBookTitle={book.title ?? "Untitled Book"}
           textSelection={highlightedText || undefined}
         />
       )}

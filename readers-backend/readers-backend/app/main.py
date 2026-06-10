@@ -37,6 +37,14 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "Golden Reads API"}
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
 # Mount all component routers
 app.include_router(books.router)
 app.include_router(audio.router)
