@@ -9,8 +9,8 @@ engine = create_engine(
     pool_pre_ping=True,        # detects stale connections
     pool_recycle=300,          # recycles connections every 5 minutes
     connect_args={
-        "sslmode": "require"   # Render requires SSL
-    } if ("localhost" not in settings.DATABASE_URL and settings.DATABASE_URL.startswith("postgres")) else {}
+        "sslmode": "require"   # Render external connections require SSL
+    } if "render.com" in settings.DATABASE_URL else {}
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
