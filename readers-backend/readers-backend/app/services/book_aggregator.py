@@ -1,12 +1,15 @@
 import httpx
 import asyncio
 from typing import List, Optional
+from app.config import settings
 
 # 1. Google Books API Fetcher
 async def fetch_google_books(client: httpx.AsyncClient, query: Optional[str] = None) -> List[dict]:
     q = query if query else "subject:fiction"
     url = "https://www.googleapis.com/books/v1/volumes"
     params = {"q": q, "maxResults": 20}
+    if settings.GEMINI_API_KEY:
+        params["key"] = settings.GEMINI_API_KEY
     try:
         resp = await client.get(url, params=params, timeout=5.0)
         if resp.status_code == 200:

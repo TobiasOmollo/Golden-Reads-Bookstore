@@ -4,6 +4,7 @@ import time
 from typing import Dict, List, Optional, Tuple
 from app.constants.genre_map import GENRE_MAP
 from app.models.schemas import Book
+from app.config import settings
 
 def map_google_book(item: dict) -> Book:
     info = item.get("volumeInfo", {})
@@ -114,6 +115,8 @@ async def fetch_books(query: str, limit: int = 20) -> list[Book]:
         return []
     url = "https://www.googleapis.com/books/v1/volumes"
     params = {"q": query, "maxResults": limit}
+    if settings.GEMINI_API_KEY:
+        params["key"] = settings.GEMINI_API_KEY
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(url, params=params)

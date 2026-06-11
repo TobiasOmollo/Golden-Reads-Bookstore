@@ -43,9 +43,16 @@ function HomePage() {
       if (session) {
         try {
           const parsed = JSON.parse(session);
-          if (parsed && parsed.name) {
-            setUserName(parsed.name);
-          }
+          const displayName = parsed?.name 
+            || parsed?.username 
+            || parsed?.email?.split('@')[0] 
+            || 'Reader';
+          
+          const formattedName = displayName
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (c: string) => c.toUpperCase());
+            
+          setUserName(formattedName);
         } catch (e) {
           console.error(e);
         }
