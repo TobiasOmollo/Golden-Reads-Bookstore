@@ -6,6 +6,12 @@ import { useCart } from "@/store/cart";
 import { formatKES } from "@/lib/format";
 import { safeCoverUrl } from "@/lib/utils";
 
+const getBookPrice = (book: Book): string => {
+  const isLargeBook = (book.download_count ?? 0) > 1000 || 
+                       (book.description?.length ?? 0) > 2000;
+  return isLargeBook ? "Ksh. 200" : "Ksh. 100";
+};
+
 export function BookCard({ book }: { book: Book }) {
   const add = useCart((s) => s.add);
   return (
@@ -57,8 +63,8 @@ export function BookCard({ book }: { book: Book }) {
               </span>
             )}
           </div>
-          <span className="font-mono text-[10px] font-bold text-foreground">
-            {formatKES(book.price ?? 0.0)}
+          <span className="px-2 py-0.5 text-[9px] font-bold bg-gold/10 text-gold rounded-full border border-gold/10">
+            {getBookPrice(book)}
           </span>
         </div>
       </Link>

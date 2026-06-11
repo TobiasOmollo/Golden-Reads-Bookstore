@@ -47,45 +47,61 @@ def create_access_token(data: dict):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-# JSON database persistence for local development mockup
-DB_FILE = os.path.join(os.path.dirname(__file__), "users_db.json")
+# Database persistence helper functions using SQLAlchemy Session
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from app.database import get_db
+from app.models.models import User
 
-def load_users() -> dict:
-    if not os.path.exists(DB_FILE):
-        # Setup initial mockup user (Amara Okonkwo)
-        default_user = {
-            "amara@goldenreads.app": {
-                "email": "amara@goldenreads.app",
-                "hashed_password": hash_password("password"),
-                "profile": {
-                    "id": "u_001",
-                    "name": "Amara Okonkwo",
-                    "email": "amara@goldenreads.app",
-                    "avatar": "https://i.pravatar.cc/200?img=47",
-                    "genres": ["Fiction", "Thriller", "Biography"],
-                    "readingGoal": 24,
-                    "preferredFormats": ["epub", "audio"]
-                }
-            }
-        }
+def db_get_user(db: Session, email: str) -> Optional[dict]:
+    user = db.query(User).filter(User.email == email.lower().strip()).first()
+    if not user:
+        return None
+    
+    # Construct profile dictionary matching expected format
+    genres = []
+    if user.genres:
         try:
-            with open(DB_FILE, "w") as f:
-                json.dump(default_user, f, indent=2)
-            return default_user
+            genres = json.loads(user.genres)
         except Exception:
-            return default_user
-    try:
-        with open(DB_FILE, "r") as f:
-            return json.load(f)
-    except Exception:
-        return {}
+            genres = [g.strip() for g in user.genres.split(",") if g.strip()]
+            
+    pref_formats = []
+    if user.preferred_formats:
+        try:
+            pref_formats = json.loads(user.preferred_formats)
+        except Exception:
+            pref_formats = [f.strip() for f in user.preferred_formats.split(",") if f.strip()]
+            
+    profile = {
+        "id": f"u_{user.email}",
+        "name": user.name,
+        "email": user.email,
+        "avatar": user.avatar or f"https://i.pravatar.cc/200?img=1",
+        "genres": genres,
+        "readingGoal": user.reading_goal or 12,
+        "preferredFormats": pref_formats
+    }
+    
+    return {
+        "email": user.email,
+        "hashed_password": user.hashed_password,
+        "profile": profile
+    }
 
-def save_users(users: dict):
-    try:
-        with open(DB_FILE, "w") as f:
-            json.dump(users, f, indent=2)
-    except Exception as e:
-        print(f"Failed to save users database: {e}")
+def db_create_user(db: Session, email: str, hashed_pw: str, name: str, reading_goal: int = 12, genres: list = [], preferred_formats: list = [], avatar: str = ""):
+    db_user = User(
+        email=email.lower().strip(),
+        hashed_password=hashed_pw,
+        name=name,
+        reading_goal=reading_goal,
+        genres=json.dumps(genres),
+        preferred_formats=json.dumps(preferred_formats),
+        avatar=avatar
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
 
 # Data Schemas
 class ProfileDetails(BaseModel):
@@ -98,7 +114,8 @@ class ProfileDetails(BaseModel):
 class UserSignupPayload(BaseModel):
     email: str
     password: str
-    profileDetails: ProfileDetails
+    name: Optional[str] = None
+    profileDetails: Optional[ProfileDetails] = None
 
 class UserLoginPayload(BaseModel):
     email: str
@@ -108,7 +125,7 @@ class GoogleLoginPayload(BaseModel):
     token: str
 
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
-async def signup(payload: UserSignupPayload):
+async def signup(payload: UserSignupPayload, db: Session = Depends(get_db)):
     email = payload.email.lower().strip()
     password = payload.password
     
@@ -124,51 +141,54 @@ async def signup(payload: UserSignupPayload):
             detail="Password must be at least 4 characters long."
         )
     
-    users = load_users()
-    if email in users:
+    existing_user = db_get_user(db, email)
+    if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A user with this email address already exists."
         )
     
-    # Construct profile structure
-    profile = {
-        "id": f"u_{int(datetime.datetime.now().timestamp() * 1000) % 100000}",
-        "name": payload.profileDetails.name or email.split("@")[0].title(),
-        "email": email,
-        "avatar": payload.profileDetails.avatar or f"https://i.pravatar.cc/200?img={(abs(hash(email)) % 70) + 1}",
-        "genres": payload.profileDetails.genres or [],
-        "readingGoal": payload.profileDetails.readingGoal or 12,
-        "preferredFormats": payload.profileDetails.preferredFormats or []
-    }
+    name = email.split("@")[0].title()
+    reading_goal = 12
+    genres = []
+    preferred_formats = ["epub"]
+    avatar = ""
     
-    users[email] = {
-        "email": email,
-        "hashed_password": hash_password(password),
-        "profile": profile
-    }
-    save_users(users)
+    if payload.profileDetails:
+        name = payload.profileDetails.name or name
+        reading_goal = payload.profileDetails.readingGoal or 12
+        genres = payload.profileDetails.genres or []
+        preferred_formats = payload.profileDetails.preferredFormats or []
+        avatar = payload.profileDetails.avatar or ""
+    elif payload.name:
+        name = payload.name
+        
+    if not avatar:
+        avatar = f"https://i.pravatar.cc/200?img={(abs(hash(email)) % 70) + 1}"
+        
+    hashed_pw = hash_password(password)
+    db_create_user(db, email, hashed_pw, name, reading_goal, genres, preferred_formats, avatar)
     
+    user_data = db_get_user(db, email)
     access_token = create_access_token({"sub": email})
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": profile
+        "user": user_data["profile"]
     }
 
 @router.post("/login")
-async def login(payload: UserLoginPayload):
+async def login(payload: UserLoginPayload, db: Session = Depends(get_db)):
     email = payload.email.lower().strip()
     password = payload.password
     
-    users = load_users()
-    if email not in users:
+    user_data = db_get_user(db, email)
+    if not user_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password."
         )
     
-    user_data = users[email]
     if not verify_password(password, user_data["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -183,7 +203,7 @@ async def login(payload: UserLoginPayload):
     }
 
 @router.post("/google")
-async def google_auth(payload: GoogleLoginPayload):
+async def google_auth(payload: GoogleLoginPayload, db: Session = Depends(get_db)):
     token = payload.token
     if not token or not token.strip():
         raise HTTPException(
@@ -191,8 +211,6 @@ async def google_auth(payload: GoogleLoginPayload):
             detail="Google OAuth token is missing or empty."
         )
     
-    # Mock-verify profile structure from token
-    # If token contains '@', extract email and name from it, otherwise use a fallback mock profile
     email = "google_user@gmail.com"
     name = "Google Reader"
     
@@ -200,29 +218,17 @@ async def google_auth(payload: GoogleLoginPayload):
         email = token.lower().strip()
         name = token.split("@")[0].title()
         
-    users = load_users()
-    if email not in users:
-        profile = {
-            "id": f"u_google_{int(datetime.datetime.now().timestamp()) % 100000}",
-            "name": name,
-            "email": email,
-            "avatar": "https://i.pravatar.cc/200?img=12",
-            "genres": ["Fiction", "Technology"],
-            "readingGoal": 12,
-            "preferredFormats": ["epub"]
-        }
-        users[email] = {
-            "email": email,
-            "hashed_password": hash_password("google_bypass_key"),
-            "profile": profile
-        }
-        save_users(users)
-    else:
-        profile = users[email]["profile"]
+    user_data = db_get_user(db, email)
+    if not user_data:
+        avatar = "https://i.pravatar.cc/200?img=12"
+        hashed_pw = hash_password("google_bypass_key")
+        db_create_user(db, email, hashed_pw, name, 12, ["Fiction", "Technology"], ["epub"], avatar)
+        user_data = db_get_user(db, email)
         
     access_token = create_access_token({"sub": email})
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "user": profile
+        "user": user_data["profile"]
     }
+

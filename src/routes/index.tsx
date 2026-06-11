@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/layout/AppShell";
@@ -35,6 +36,23 @@ function byGenre(books: Book[], g: string) {
 }
 
 function HomePage() {
+  const [userName, setUserName] = useState("Reader");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const session = localStorage.getItem("golden_reads_user");
+      if (session) {
+        try {
+          const parsed = JSON.parse(session);
+          if (parsed && parsed.name) {
+            setUserName(parsed.name);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
   const { data: trending = [], isLoading } = useQuery({
     queryKey: ["books", "trending"],
     queryFn: api.books.trending,
@@ -57,7 +75,7 @@ function HomePage() {
     <AppShell>
       <div className="px-5 pt-4 pb-1">
         <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-muted-foreground">
-          Welcome back, Amara
+          Welcome back, {userName}
         </p>
         <h1 className="font-display text-2xl font-semibold mt-1">
           What will you read today?

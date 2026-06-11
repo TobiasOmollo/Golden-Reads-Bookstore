@@ -1,1 +1,1 @@
-# Marks models as a Python package
+from app.models.models import User, SeededBook, SeededAudiobook, SeededMagazine

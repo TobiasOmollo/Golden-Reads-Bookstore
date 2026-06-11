@@ -16,9 +16,19 @@ import type { Book } from "@/types";
 import BookReader from "@/components/book/BookReader";
 import AiAssistant from "@/components/ai/AiAssistant";
 
+const getBookPrice = (book: any): string => {
+  const isLargeBook = (book.download_count ?? 0) > 1000 || 
+                       (book.description?.length ?? 0) > 2000;
+  return isLargeBook ? "Ksh. 200" : "Ksh. 100";
+};
 
 export const Route = createFileRoute("/book/$id")({
-  loader: ({ params }) => api.books.detail(params.id),
+  loader: ({ params }) => {
+    if (params.id.startsWith("a")) {
+      return api.audio.detail(params.id);
+    }
+    return api.books.detail(params.id);
+  },
   head: ({ loaderData }) => {
     const book = loaderData;
     return {
@@ -42,11 +52,17 @@ function BookDetail() {
   const { id } = Route.useParams();
   const router = useRouter();
   const loaderData = Route.useLoaderData();
-  const { data: book = loaderData } = useQuery<Book>({
+  const { data: book = loaderData } = useQuery<any>({
     queryKey: ["book", id],
-    queryFn: () => api.books.detail(id),
+    queryFn: () => {
+      if (id.startsWith("a")) {
+        return api.audio.detail(id);
+      }
+      return api.books.detail(id);
+    },
     initialData: loaderData,
   });
+
   const add = useCart((s) => s.add);
   const wish = useWishlist();
   const upsert = useLibrary((s) => s.upsert);
@@ -167,37 +183,58 @@ function BookDetail() {
           </div>
 
           {/* Ebook Actions Section */}
-          <div className="mt-6 space-y-2.5">
-            {book.read_url && (
-              <a
-                href={book.read_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gold/10 text-gold font-mono text-[11px] uppercase tracking-wider font-bold border border-gold/20 hover:bg-gold/25 transition-colors"
-              >
-                <BookOpen size={14} />
-                Read Online
-              </a>
-            )}
-            <div className="grid grid-cols-2 gap-2">
-              {book.epub_url && (
+          {(book.read_url || book.epub_url || book.download_url) && (
+            <div className="mt-6 space-y-2.5">
+              {book.read_url && (
                 <a
-                  href={book.epub_url}
-                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-divider text-muted-foreground font-mono text-[10px] uppercase tracking-wider hover:text-foreground hover:border-muted-foreground transition-colors"
+                  href={book.read_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gold/10 text-gold font-mono text-[11px] uppercase tracking-wider font-bold border border-gold/20 hover:bg-gold/25 transition-colors"
                 >
-                  Download EPUB
+                  <BookOpen size={14} />
+                  Read Online
                 </a>
               )}
-              {book.download_url && (
+              <div className="grid grid-cols-2 gap-2">
+                {book.epub_url && (
+                  <a
+                    href={book.epub_url}
+                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-divider text-muted-foreground font-mono text-[10px] uppercase tracking-wider hover:text-foreground hover:border-muted-foreground transition-colors"
+                  >
+                    Download EPUB
+                  </a>
+                )}
+                {book.download_url && (
+                  <a
+                    href={book.download_url}
+                    className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-divider text-muted-foreground font-mono text-[10px] uppercase tracking-wider hover:text-foreground hover:border-muted-foreground transition-colors"
+                  >
+                    Download Text
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Audiobook Actions Section */}
+          {(book.listen_url || book.stream_url) && (
+            <div className="mt-6 space-y-2.5">
+              {book.listen_url && (
                 <a
-                  href={book.download_url}
-                  className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-divider text-muted-foreground font-mono text-[10px] uppercase tracking-wider hover:text-foreground hover:border-muted-foreground transition-colors"
+                  href={book.listen_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gold/10 text-gold font-mono text-[11px] uppercase tracking-wider font-bold border border-gold/20 hover:bg-gold/25 transition-colors"
                 >
-                  Download Text
+                  Download & Listen
                 </a>
+              )}
+              {book.stream_url && (
+                <audio controls src={book.stream_url} className="w-full mt-4" />
               )}
             </div>
-          </div>
+          )}
         </motion.section>
 
         <section className="mt-10">
@@ -240,7 +277,9 @@ function BookDetail() {
         <div className="max-w-md mx-auto px-5 py-3 flex items-center gap-2">
           <div className="flex-1">
             <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Price</p>
-            <p className="font-display text-xl font-semibold text-gold">{formatKES(book.price ?? 0.0)}</p>
+            <span className="inline-block px-3 py-1 text-sm font-semibold bg-gold/15 text-gold rounded-full border border-gold/20 mt-0.5">
+              {getBookPrice(book)}
+            </span>
           </div>
           <button
             onClick={() => wish.toggle(book)}

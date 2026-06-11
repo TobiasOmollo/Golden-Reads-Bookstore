@@ -4,6 +4,7 @@ from typing import List, Optional
 from app.models.schemas import Book, UnifiedBook
 from app.services.gutendex import gutendex_service
 from app.services.book_aggregator import book_aggregator_service
+from app.services.db import execute_query
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
@@ -91,36 +92,106 @@ FALLBACK_UNIFIED_CLASSICS = [
     )
 ]
 
+def get_db_books() -> List[UnifiedBook]:
+    rows = execute_query("SELECT id, title, author, cover_url, description, genre FROM books")
+    db_books = []
+    for r in rows:
+        db_books.append(UnifiedBook(
+            id=r["id"],
+            title=r["title"],
+            author=r["author"] or "Unknown Author",
+            cover_url=r["cover_url"] or "",
+            epub_url="",
+            description=r["description"] or "",
+            genre=r["genre"] or "Fiction"
+        ))
+    return db_books
+
 @router.get("/search", response_model=List[UnifiedBook])
 async def search_books(
     q: Optional[str] = Query(None, description="Search term for title or author"),
     genre: Optional[str] = Query(None, description="Genre tag matching the GENRE_MAP"),
     page: int = Query(1, ge=1, description="Page number")
 ):
+    db_books = get_db_books()
+    if q or genre:
+        filtered_db = []
+        q_lower = q.lower().strip() if q else ""
+        genre_lower = genre.lower().strip() if genre else ""
+        for b in db_books:
+            match = False
+            if q_lower:
+                if q_lower in b.title.lower() or q_lower in b.author.lower() or q_lower in b.description.lower():
+                    match = True
+            if genre_lower:
+                if genre_lower in b.genre.lower():
+                    match = True
+            if match:
+                filtered_db.append(b)
+        db_books = filtered_db
+        
+    live_books = []
     try:
         search_query = q or genre
         results = await book_aggregator_service.aggregate_books(query=search_query)
-        if not results:
-            return FALLBACK_UNIFIED_CLASSICS
-        return results
+        if results:
+            for r in results:
+                live_books.append(UnifiedBook(
+                    id=r.get("id", ""),
+                    title=r.get("title", ""),
+                    author=r.get("author", "Unknown Author"),
+                    cover_url=r.get("cover_url", ""),
+                    epub_url=r.get("epub_url", ""),
+                    description=r.get("description", ""),
+                    genre=r.get("genre", "Fiction")
+                ))
     except Exception as e:
-        print(f"Error in search_books: {e}")
-        return FALLBACK_UNIFIED_CLASSICS
+        print(f"Error fetching live books: {e}")
+        
+    return db_books + live_books
 
 @router.get("/trending", response_model=List[UnifiedBook])
 async def get_trending():
+    db_books = get_db_books()
+    live_books = []
     try:
         results = await book_aggregator_service.aggregate_books(query=None)
-        if not results:
-            return FALLBACK_UNIFIED_CLASSICS
-        return results
+        if results:
+            for r in results:
+                live_books.append(UnifiedBook(
+                    id=r.get("id", ""),
+                    title=r.get("title", ""),
+                    author=r.get("author", "Unknown Author"),
+                    cover_url=r.get("cover_url", ""),
+                    epub_url=r.get("epub_url", ""),
+                    description=r.get("description", ""),
+                    genre=r.get("genre", "Fiction")
+                ))
     except Exception as e:
-        print(f"Error in get_trending: {e}")
-        return FALLBACK_UNIFIED_CLASSICS
-
+        print(f"Error fetching live trending books: {e}")
+        
+    return db_books + live_books
 
 @router.get("/{id}", response_model=Book)
 async def get_book_by_id(id: str):
+    rows = execute_query("SELECT * FROM books WHERE id = %s", (id,))
+    if rows:
+        r = rows[0]
+        return Book(
+            id=r["id"],
+            title=r["title"],
+            author=r["author"] or "Unknown Author",
+            cover=r["cover_url"] or "",
+            cover_url=r["cover_url"] or "",
+            description=r["description"] or "",
+            genre=[r["genre"]] if r["genre"] else [],
+            genres=[r["genre"]] if r["genre"] else [],
+            read_url=r["read_url"] or "",
+            epub_url=r["epub_url"] or "",
+            download_url=r["download_url"] or "",
+            gutendexId=r["gutendex_id"]
+        )
+        
     numeric_id = id[1:] if id.startswith("g") else id
     try:
         gutenberg_id = int(numeric_id)
@@ -134,20 +205,28 @@ async def get_book_by_id(id: str):
 
 @router.get("/{id}/cover")
 async def proxy_cover(id: str):
-    numeric_id = id[1:] if id.startswith("g") else id
-    try:
-        gutenberg_id = int(numeric_id)
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid book ID format.")
-    
-    book = await gutendex_service.get_book_by_id(gutenberg_id)
-    cover_url = book.cover if book else f"https://picsum.photos/seed/book_{gutenberg_id}/200/300"
-    
+    rows = execute_query("SELECT cover_url FROM books WHERE id = %s", (id,))
+    cover_url = ""
+    if rows:
+        cover_url = rows[0]["cover_url"]
+        
+    if not cover_url:
+        numeric_id = id[1:] if id.startswith("g") else id
+        try:
+            gutenberg_id = int(numeric_id)
+            book = await gutendex_service.get_book_by_id(gutenberg_id)
+            if book:
+                cover_url = book.cover
+        except ValueError:
+            pass
+            
+    if not cover_url:
+        cover_url = f"https://picsum.photos/seed/book_{id}/200/300"
+        
     async with httpx.AsyncClient() as client:
         try:
             resp = await client.get(cover_url, timeout=5.0)
             if resp.status_code == 200:
-                # Return the image with correct content type
                 headers = {
                     "Cache-Control": "public, max-age=86400",
                     "Access-Control-Allow-Origin": "*"
@@ -156,10 +235,10 @@ async def proxy_cover(id: str):
         except Exception:
             pass
 
-    # Redirect or stream absolute fallback picsum
     async with httpx.AsyncClient() as client:
         try:
-            resp = await client.get(f"https://picsum.photos/seed/book_{gutenberg_id}/200/300")
+            resp = await client.get(f"https://picsum.photos/seed/book_{id}/200/300")
             return Response(content=resp.content, media_type="image/jpeg")
         except Exception:
             raise HTTPException(status_code=502, detail="Failed to fetch book cover image assets.")
+

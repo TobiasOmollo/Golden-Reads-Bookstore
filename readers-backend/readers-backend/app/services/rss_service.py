@@ -90,6 +90,32 @@ async def fetch_feeds(
       sources    — explicit source name substrings — None = all
       limit      — max articles to return after merge+sort
     """
+    from app.services.db import execute_query
+
+    db_articles = []
+    try:
+        rows = execute_query("SELECT * FROM magazines")
+        for r in rows:
+            if countries and r["country"] not in countries:
+                continue
+            if categories and r["category"] not in categories:
+                continue
+            if sources and not any(q.lower() in r["publication"].lower() for q in sources):
+                continue
+            db_articles.append(Article(
+                id=r["id"],
+                title=r["title"],
+                publication=r["publication"],
+                country=r["country"] or "KE",
+                category=r["category"] or "general",
+                heroImage=r["hero_image"] or "",
+                summary=r["summary"] or "",
+                sourceUrl=r["source_url"] or "",
+                publishedAt=r["published_at"] or ""
+            ))
+    except Exception as e:
+        print(f"[rss_service] Error fetching database magazines: {e}")
+
     filtered = RSS_SOURCES
     if countries:
         filtered = [s for s in filtered if s['country'] in countries]
@@ -110,4 +136,5 @@ async def fetch_feeds(
 
     # sort newest first (empty publishedAt goes to end)
     merged.sort(key=lambda a: a.publishedAt or '0000', reverse=True)
-    return merged[:limit]
+    return (db_articles + merged)[:limit]
+

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers import books, audio, podcasts, magazines, ai, auth
+from app.services.db import init_db
 import os
 
 app = FastAPI(
@@ -11,6 +12,10 @@ app = FastAPI(
     description="Asynchronous, production-ready FastAPI backend for the Readers App. Connecting Gutenberg books, LibriVox audiobooks, Podcast Index, and RSS publications, amplified by Gemini 1.5 Flash.",
     version="1.0.0"
 )
+
+@app.on_event("startup")
+def startup_event():
+    init_db()
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +31,7 @@ app.add_middleware(
 )
 
 @app.get("/")
+
 async def root():
     return {"status": "ok", "service": "Golden Reads API"}
 

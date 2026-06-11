@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useNavigate,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -141,6 +142,18 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const navigate = useNavigate();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const isLoginPage = window.location.pathname === "/login";
+      const session = localStorage.getItem("golden_reads_user");
+      if (!session && !isLoginPage) {
+        navigate({ to: "/login" });
+      }
+    }
+  }, [navigate, router.state.location.pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>

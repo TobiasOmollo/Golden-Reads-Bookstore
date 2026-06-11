@@ -2,16 +2,29 @@ import type { Book, Article, Episode, Flashcard, AudiobookDetail } from "@/types
 
 const BASE = import.meta.env.VITE_API_URL;
 
+function getHeaders(customHeaders: Record<string, string> = {}): HeadersInit {
+  const headers: Record<string, string> = { ...customHeaders };
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("golden_reads_token");
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+  }
+  return headers;
+}
+
 async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`);
+  const headers = getHeaders();
+  const res = await fetch(`${BASE}${path}`, { headers });
   if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
   return (await res.json()) as T;
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
+  const headers = getHeaders({ "Content-Type": "application/json" });
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(body),
   });
   if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
