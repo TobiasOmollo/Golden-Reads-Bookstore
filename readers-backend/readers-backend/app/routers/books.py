@@ -174,7 +174,8 @@ async def get_trending():
 
 @router.get("/{id}", response_model=Book)
 async def get_book_by_id(id: str):
-    rows = execute_query("SELECT * FROM books WHERE id = %s", (id,))
+    db_id = id if id.startswith("g") else f"g{id}"
+    rows = execute_query("SELECT * FROM books WHERE id = %s", (db_id,))
     if rows:
         r = rows[0]
         return Book(
@@ -205,7 +206,8 @@ async def get_book_by_id(id: str):
 
 @router.get("/{id}/cover")
 async def proxy_cover(id: str):
-    rows = execute_query("SELECT cover_url FROM books WHERE id = %s", (id,))
+    db_id = id if id.startswith("g") else f"g{id}"
+    rows = execute_query("SELECT cover_url FROM books WHERE id = %s", (db_id,))
     cover_url = ""
     if rows:
         cover_url = rows[0]["cover_url"]
