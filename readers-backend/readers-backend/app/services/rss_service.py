@@ -1,4 +1,6 @@
 import asyncio, hashlib, re, time
+import socket
+socket.setdefaulttimeout(5.0)
 import feedparser
 import httpx
 from app.constants.rss_sources import RSS_SOURCES
