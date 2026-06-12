@@ -46,106 +46,125 @@ def seed_data():
     print("Defining Public Domain Classics (Gutendex)...")
     gutendex_books = [
         # Fiction
-        {"id": 1342, "genre": "Fiction"},
-        {"id": 84, "genre": "Fiction"},
-        {"id": 345, "genre": "Fiction"},
-        {"id": 174, "genre": "Fiction"},
-        {"id": 11, "genre": "Fiction"},
-        {"id": 1260, "genre": "Fiction"},
-        {"id": 98, "genre": "Fiction"},
-        {"id": 2701, "genre": "Fiction"},
-        {"id": 64317, "genre": "Fiction"},
-        {"id": 768, "genre": "Fiction"},
-        {"id": 1184, "genre": "Fiction"},
-        {"id": 135, "genre": "Fiction"},
-        {"id": 1399, "genre": "Fiction"},
-        {"id": 2600, "genre": "Fiction"},
-        {"id": 2554, "genre": "Fiction"},
+        {"id": 1342, "genre": "Fiction", "title": "Pride and Prejudice", "author": "Jane Austen"},
+        {"id": 84, "genre": "Fiction", "title": "Frankenstein; Or, The Modern Prometheus", "author": "Mary Wollstonecraft Shelley"},
+        {"id": 345, "genre": "Fiction", "title": "Dracula", "author": "Bram Stoker"},
+        {"id": 174, "genre": "Fiction", "title": "The Picture of Dorian Gray", "author": "Oscar Wilde"},
+        {"id": 11, "genre": "Fiction", "title": "Alice's Adventures in Wonderland", "author": "Lewis Carroll"},
+        {"id": 1260, "genre": "Fiction", "title": "Jane Eyre", "author": "Charlotte Brontë"},
+        {"id": 98, "genre": "Fiction", "title": "A Tale of Two Cities", "author": "Charles Dickens"},
+        {"id": 2701, "genre": "Fiction", "title": "Moby Dick; Or, The Whale", "author": "Herman Melville"},
+        {"id": 64317, "genre": "Fiction", "title": "The Great Gatsby", "author": "F. Scott Fitzgerald"},
+        {"id": 768, "genre": "Fiction", "title": "Wuthering Heights", "author": "Emily Brontë"},
+        {"id": 1184, "genre": "Fiction", "title": "The Count of Monte Cristo", "author": "Alexandre Dumas"},
+        {"id": 135, "genre": "Fiction", "title": "Les Misérables", "author": "Victor Hugo"},
+        {"id": 1399, "genre": "Fiction", "title": "Anna Karenina", "author": "Leo Tolstoy"},
+        {"id": 2600, "genre": "Fiction", "title": "War and Peace", "author": "Leo Tolstoy"},
+        {"id": 2554, "genre": "Fiction", "title": "Crime and Punishment", "author": "Fyodor Dostoyevsky"},
         # Mystery
-        {"id": 1661, "genre": "Mystery"},
-        {"id": 2852, "genre": "Mystery"},
-        {"id": 61262, "genre": "Mystery"},
-        {"id": 863, "genre": "Mystery"},
-        {"id": 3154, "genre": "Mystery"},
+        {"id": 1661, "genre": "Mystery", "title": "The Adventures of Sherlock Holmes", "author": "Arthur Conan Doyle"},
+        {"id": 2852, "genre": "Mystery", "title": "The Hound of the Baskervilles", "author": "Arthur Conan Doyle"},
+        {"id": 61262, "genre": "Mystery", "title": "And Then There Were None", "author": "Agatha Christie"},
+        {"id": 863, "genre": "Mystery", "title": "The Mysterious Affair at Styles", "author": "Agatha Christie"},
+        {"id": 3154, "genre": "Mystery", "title": "The Big Sleep", "author": "Raymond Chandler"},
         # Romance
-        {"id": 161, "genre": "Romance"},
-        {"id": 158, "genre": "Romance"},
-        {"id": 105, "genre": "Romance"},
-        {"id": 4276, "genre": "Romance"},
-        {"id": 514, "genre": "Romance"},
+        {"id": 161, "genre": "Romance", "title": "Sense and Sensibility", "author": "Jane Austen"},
+        {"id": 158, "genre": "Romance", "title": "Emma", "author": "Jane Austen"},
+        {"id": 105, "genre": "Romance", "title": "Persuasion", "author": "Jane Austen"},
+        {"id": 4276, "genre": "Romance", "title": "North and South", "author": "Elizabeth Gaskell"},
+        {"id": 514, "genre": "Romance", "title": "Little Women", "author": "Louisa May Alcott"},
         # History and Biography
-        {"id": 132, "genre": "History and Biography"},
-        {"id": 2680, "genre": "History and Biography"},
-        {"id": 1232, "genre": "History and Biography"},
-        {"id": 148, "genre": "History and Biography"},
-        {"id": 2376, "genre": "History and Biography"},
+        {"id": 132, "genre": "History and Biography", "title": "The Art of War", "author": "Sun Tzu"},
+        {"id": 2680, "genre": "History and Biography", "title": "Meditations", "author": "Marcus Aurelius"},
+        {"id": 1232, "genre": "History and Biography", "title": "The Prince", "author": "Niccolò Machiavelli"},
+        {"id": 148, "genre": "History and Biography", "title": "Autobiography of Benjamin Franklin", "author": "Benjamin Franklin"},
+        {"id": 2376, "genre": "History and Biography", "title": "Up From Slavery: An Autobiography", "author": "Booker T. Washington"},
         # Science Fiction
-        {"id": 35, "genre": "Science Fiction"},
-        {"id": 36, "genre": "Science Fiction"},
-        {"id": 164, "genre": "Science Fiction"},
-        {"id": 5230, "genre": "Science Fiction"},
-        {"id": 103, "genre": "Science Fiction"}
+        {"id": 35, "genre": "Science Fiction", "title": "The Time Machine", "author": "H. G. Wells"},
+        {"id": 36, "genre": "Science Fiction", "title": "The War of the Worlds", "author": "H. G. Wells"},
+        {"id": 164, "genre": "Science Fiction", "title": "Twenty Thousand Leagues Under the Sea", "author": "Jules Verne"},
+        {"id": 5230, "genre": "Science Fiction", "title": "The Invisible Man", "author": "H. G. Wells"},
+        {"id": 103, "genre": "Science Fiction", "title": "Around the World in Eighty Days", "author": "Jules Verne"}
     ]
 
     print("Fetching and Seeding Gutendex Books...")
     for item in gutendex_books:
         gid = item["id"]
         genre = item["genre"]
+        fallback_title = item["title"]
+        fallback_author = item["author"]
         
+        # Check if already exists by title
+        existing = execute_query("SELECT id FROM books WHERE title = %s", (fallback_title,))
+        if existing:
+            # Update price anyway
+            execute_query("UPDATE books SET price = %s WHERE title = %s", ("Ksh. 100", fallback_title), is_write=True)
+            print(f"Book '{fallback_title}' already exists. Updated price to Ksh. 100.")
+            continue
+            
         print(f"Fetching Gutendex ID {gid}...")
         url = f"https://gutendex.com/books/{gid}"
+        book_data = None
         try:
-            resp = httpx.get(url, timeout=15.0)
-            if resp.status_code != 200:
-                print(f"Failed to fetch Gutendex ID {gid}, status: {resp.status_code}")
-                continue
-            book_data = resp.json()
-        except Exception as e:
-            print(f"Error fetching Gutendex ID {gid}: {e}")
-            continue
-
-        title = book_data.get("title", "Unknown Title")
-        
-        # Handle author parsing (convert "Last, First" to "First Last")
-        authors_raw = book_data.get("authors", [])
-        author = "Unknown Author"
-        if authors_raw:
-            author_name = authors_raw[0].get("name", "Unknown Author")
-            if "," in author_name:
-                parts = author_name.split(",")
-                author = f"{parts[1].strip()} {parts[0].strip()}"
+            resp = httpx.get(url, timeout=5.0)
+            if resp.status_code == 200:
+                book_data = resp.json()
             else:
-                author = author_name
+                print(f"Failed to fetch Gutendex ID {gid}, status: {resp.status_code}. Using dynamic fallback.")
+        except Exception as e:
+            print(f"Error fetching Gutendex ID {gid}: {e}. Using dynamic fallback.")
 
-        formats = book_data.get("formats", {})
-        cover_url = formats.get("image/jpeg", "")
-        if cover_url.startswith("http://"):
-            cover_url = cover_url.replace("http://", "https://")
-        if not cover_url:
-            cover_url = f"https://picsum.photos/seed/book_{gid}/200/300"
-
-        subjects = book_data.get("subjects", [])
-        description = ", ".join(subjects) if subjects else "A classic public domain book."
-
-        read_url = formats.get("text/html", "") or formats.get("text/plain", "")
-        if read_url.startswith("http://"):
-            read_url = read_url.replace("http://", "https://")
+        if book_data:
+            title = book_data.get("title", fallback_title)
             
-        epub_url = formats.get("application/epub+zip", "")
-        if epub_url.startswith("http://"):
-            epub_url = epub_url.replace("http://", "https://")
-            
-        download_url = formats.get("text/plain; charset=utf-8") or formats.get("text/plain") or ""
-        if download_url.startswith("http://"):
-            download_url = download_url.replace("http://", "https://")
+            # Handle author parsing (convert "Last, First" to "First Last")
+            authors_raw = book_data.get("authors", [])
+            author = fallback_author
+            if authors_raw:
+                author_name = authors_raw[0].get("name", fallback_author)
+                if "," in author_name:
+                    parts = author_name.split(",")
+                    author = f"{parts[1].strip()} {parts[0].strip()}"
+                else:
+                    author = author_name
+
+            formats = book_data.get("formats", {})
+            cover_url = formats.get("image/jpeg", "")
+            if cover_url.startswith("http://"):
+                cover_url = cover_url.replace("http://", "https://")
+            if not cover_url:
+                cover_url = f"https://www.gutenberg.org/cache/epub/{gid}/pg{gid}.cover.medium.jpg"
+
+            subjects = book_data.get("subjects", [])
+            description = ", ".join(subjects) if subjects else "A classic public domain book."
+
+            read_url = formats.get("text/html", "") or formats.get("text/plain", "")
+            if read_url.startswith("http://"):
+                read_url = read_url.replace("http://", "https://")
+                
+            epub_url = formats.get("application/epub+zip", "")
+            if epub_url.startswith("http://"):
+                epub_url = epub_url.replace("http://", "https://")
+                
+            download_url = formats.get("text/plain; charset=utf-8") or formats.get("text/plain") or ""
+            if download_url.startswith("http://"):
+                download_url = download_url.replace("http://", "https://")
+        else:
+            # Dynamic Fallback: Construct standard Gutenberg URLs dynamically
+            title = fallback_title
+            author = fallback_author
+            cover_url = f"https://www.gutenberg.org/cache/epub/{gid}/pg{gid}.cover.medium.jpg"
+            description = "A classic Gutenberg public domain book."
+            read_url = f"https://www.gutenberg.org/files/{gid}/{gid}-h/{gid}-h.htm"
+            epub_url = f"https://www.gutenberg.org/ebooks/{gid}.epub3.images"
+            download_url = f"https://www.gutenberg.org/files/{gid}/{gid}-0.txt"
 
         price = "Ksh. 100"
         db_id = f"g{gid}"
 
-        # Idempotency check on title field
-        existing = execute_query("SELECT id FROM books WHERE title = %s", (title,))
-        if existing:
-            # Update existing book's price and live links
+        # Double check idempotency on title field (in case the fetched title is slightly different)
+        existing_fetched = execute_query("SELECT id FROM books WHERE title = %s", (title,))
+        if existing_fetched:
             execute_query(
                 "UPDATE books SET price = %s, cover_url = %s, read_url = %s, epub_url = %s, download_url = %s WHERE title = %s",
                 (price, cover_url, read_url, epub_url, download_url, title),
