@@ -39,3 +39,7 @@ __pycache__/
 venv/
 ENV/
 env/
+
+# Vercel
+.vercel/
+
