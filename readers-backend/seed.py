@@ -1,16 +1,31 @@
 import os
 import sys
 import json
+import httpx
+import re
 
 # Add readers-backend/readers-backend to python path for imports
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "readers-backend"))
 
 from app.routers.auth import hash_password
 from app.services.db import init_db, execute_query
+from app.config import settings
+
+def slugify(text):
+    text = text.lower()
+    text = re.sub(r'[^a-z0-9]+', '_', text)
+    return text.strip('_')
 
 def seed_data():
     print("Initializing Database tables...")
     init_db()
+
+    print("Ensuring DB schema has price column...")
+    try:
+        execute_query("ALTER TABLE books ADD COLUMN price VARCHAR(50)", is_write=True)
+        print("Successfully ensured price column exists.")
+    except Exception as e:
+        print("Price column already exists or skipped:", e)
 
     print("Seeding Users...")
     user_sql = """
@@ -28,27 +43,249 @@ def seed_data():
         "https://i.pravatar.cc/200?img=47"
     ), is_write=True)
 
-    print("Seeding Books...")
-    books = [
-        ("g1342", "Pride and Prejudice", "Jane Austen", "https://covers.openlibrary.org/b/id/1342-L.jpg", "A classic romantic novel of manners written by Jane Austen in 1813.", "Fiction", 1342, "https://www.gutenberg.org/files/1342/1342-h/1342-h.htm", "https://www.gutenberg.org/ebooks/1342.epub3.images", "https://www.gutenberg.org/files/1342/1342-0.txt"),
-        ("g84", "Frankenstein; Or, The Modern Prometheus", "Mary Wollstonecraft Shelley", "https://covers.openlibrary.org/b/id/84-L.jpg", "A classic gothic horror novel written by Mary Shelley in 1818.", "Horror", 84, "https://www.gutenberg.org/files/84/84-h/84-h.htm", "https://www.gutenberg.org/ebooks/84.epub3.images", "https://www.gutenberg.org/files/84/84-0.txt"),
-        ("g64317", "The Great Gatsby", "F. Scott Fitzgerald", "https://covers.openlibrary.org/b/id/64317-L.jpg", "A classic novel of the Jazz Age written by F. Scott Fitzgerald in 1925.", "Fiction", 64317, "https://www.gutenberg.org/files/64317/64317-h/64317-h.htm", "https://www.gutenberg.org/ebooks/64317.epub3.images", "https://www.gutenberg.org/files/64317/64317-0.txt"),
-        ("g2701", "Moby Dick; Or, The Whale", "Herman Melville", "https://covers.openlibrary.org/b/id/2701-L.jpg", "A giant whale, a mad captain, and a classic tale of obsession.", "Adventure", 2701, "https://www.gutenberg.org/files/2701/2701-h/2701-h.htm", "https://www.gutenberg.org/ebooks/2701.epub3.images", "https://www.gutenberg.org/files/2701/2701-0.txt"),
-        ("g1661", "The Adventures of Sherlock Holmes", "Arthur Conan Doyle", "https://covers.openlibrary.org/b/id/1661-L.jpg", "A collection of twelve detective stories by Arthur Conan Doyle.", "Mystery", 1661, "https://www.gutenberg.org/files/1661/1661-h/1661-h.htm", "https://www.gutenberg.org/ebooks/1661.epub3.images", "https://www.gutenberg.org/files/1661/1661-0.txt"),
-        ("g11", "Alice's Adventures in Wonderland", "Lewis Carroll", "https://covers.openlibrary.org/b/id/11-L.jpg", "A classic fantasy tale of a girl falling down a rabbit hole.", "Fantasy", 11, "https://www.gutenberg.org/files/11/11-h/11-h.htm", "https://www.gutenberg.org/ebooks/11.epub3.images", "https://www.gutenberg.org/files/11/11-0.txt"),
-        ("g98", "A Tale of Two Cities", "Charles Dickens", "https://covers.openlibrary.org/b/id/98-L.jpg", "A historical novel set in London and Paris during the French Revolution.", "History", 98, "https://www.gutenberg.org/files/98/98-h/98-h.htm", "https://www.gutenberg.org/ebooks/98.epub3.images", "https://www.gutenberg.org/files/98/98-0.txt"),
-        ("g345", "Dracula", "Bram Stoker", "https://covers.openlibrary.org/b/id/345-L.jpg", "The classic gothic vampire novel written by Bram Stoker in 1897.", "Horror", 345, "https://www.gutenberg.org/files/345/345-h/345-h.htm", "https://www.gutenberg.org/ebooks/345.epub3.images", "https://www.gutenberg.org/files/345/345-0.txt"),
-        ("g174", "The Picture of Dorian Gray", "Oscar Wilde", "https://covers.openlibrary.org/b/id/174-L.jpg", "A young man sells his soul for eternal youth and beauty.", "Fiction", 174, "https://www.gutenberg.org/files/174/174-h/174-h.htm", "https://www.gutenberg.org/ebooks/174.epub3.images", "https://www.gutenberg.org/files/174/174-0.txt"),
-        ("g1260", "Jane Eyre", "Charlotte Brontë", "https://covers.openlibrary.org/b/id/1260-L.jpg", "A governess finds love and secrets in a gothic estate.", "Fiction", 1260, "https://www.gutenberg.org/files/1260/1260-h/1260-h.htm", "https://www.gutenberg.org/ebooks/1260.epub3.images", "https://www.gutenberg.org/files/1260/1260-0.txt"),
+    print("Defining Public Domain Classics (Gutendex)...")
+    gutendex_books = [
+        # Fiction
+        {"id": 1342, "genre": "Fiction"},
+        {"id": 84, "genre": "Fiction"},
+        {"id": 345, "genre": "Fiction"},
+        {"id": 174, "genre": "Fiction"},
+        {"id": 11, "genre": "Fiction"},
+        {"id": 1260, "genre": "Fiction"},
+        {"id": 98, "genre": "Fiction"},
+        {"id": 2701, "genre": "Fiction"},
+        {"id": 64317, "genre": "Fiction"},
+        {"id": 768, "genre": "Fiction"},
+        {"id": 1184, "genre": "Fiction"},
+        {"id": 135, "genre": "Fiction"},
+        {"id": 1399, "genre": "Fiction"},
+        {"id": 2600, "genre": "Fiction"},
+        {"id": 2554, "genre": "Fiction"},
+        # Mystery
+        {"id": 1661, "genre": "Mystery"},
+        {"id": 2852, "genre": "Mystery"},
+        {"id": 61262, "genre": "Mystery"},
+        {"id": 863, "genre": "Mystery"},
+        {"id": 3154, "genre": "Mystery"},
+        # Romance
+        {"id": 161, "genre": "Romance"},
+        {"id": 158, "genre": "Romance"},
+        {"id": 105, "genre": "Romance"},
+        {"id": 4276, "genre": "Romance"},
+        {"id": 514, "genre": "Romance"},
+        # History and Biography
+        {"id": 132, "genre": "History and Biography"},
+        {"id": 2680, "genre": "History and Biography"},
+        {"id": 1232, "genre": "History and Biography"},
+        {"id": 148, "genre": "History and Biography"},
+        {"id": 2376, "genre": "History and Biography"},
+        # Science Fiction
+        {"id": 35, "genre": "Science Fiction"},
+        {"id": 36, "genre": "Science Fiction"},
+        {"id": 164, "genre": "Science Fiction"},
+        {"id": 5230, "genre": "Science Fiction"},
+        {"id": 103, "genre": "Science Fiction"}
     ]
-    
-    book_sql = """
-    INSERT INTO books (id, title, author, cover_url, description, genre, gutendex_id, read_url, epub_url, download_url)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (id) DO NOTHING
-    """
-    for b in books:
-        execute_query(book_sql, b, is_write=True)
+
+    print("Fetching and Seeding Gutendex Books...")
+    for item in gutendex_books:
+        gid = item["id"]
+        genre = item["genre"]
+        
+        print(f"Fetching Gutendex ID {gid}...")
+        url = f"https://gutendex.com/books/{gid}"
+        try:
+            resp = httpx.get(url, timeout=15.0)
+            if resp.status_code != 200:
+                print(f"Failed to fetch Gutendex ID {gid}, status: {resp.status_code}")
+                continue
+            book_data = resp.json()
+        except Exception as e:
+            print(f"Error fetching Gutendex ID {gid}: {e}")
+            continue
+
+        title = book_data.get("title", "Unknown Title")
+        
+        # Handle author parsing (convert "Last, First" to "First Last")
+        authors_raw = book_data.get("authors", [])
+        author = "Unknown Author"
+        if authors_raw:
+            author_name = authors_raw[0].get("name", "Unknown Author")
+            if "," in author_name:
+                parts = author_name.split(",")
+                author = f"{parts[1].strip()} {parts[0].strip()}"
+            else:
+                author = author_name
+
+        formats = book_data.get("formats", {})
+        cover_url = formats.get("image/jpeg", "")
+        if cover_url.startswith("http://"):
+            cover_url = cover_url.replace("http://", "https://")
+        if not cover_url:
+            cover_url = f"https://picsum.photos/seed/book_{gid}/200/300"
+
+        subjects = book_data.get("subjects", [])
+        description = ", ".join(subjects) if subjects else "A classic public domain book."
+
+        read_url = formats.get("text/html", "") or formats.get("text/plain", "")
+        if read_url.startswith("http://"):
+            read_url = read_url.replace("http://", "https://")
+            
+        epub_url = formats.get("application/epub+zip", "")
+        if epub_url.startswith("http://"):
+            epub_url = epub_url.replace("http://", "https://")
+            
+        download_url = formats.get("text/plain; charset=utf-8") or formats.get("text/plain") or ""
+        if download_url.startswith("http://"):
+            download_url = download_url.replace("http://", "https://")
+
+        price = "Ksh. 100"
+        db_id = f"g{gid}"
+
+        # Idempotency check on title field
+        existing = execute_query("SELECT id FROM books WHERE title = %s", (title,))
+        if existing:
+            # Update existing book's price and live links
+            execute_query(
+                "UPDATE books SET price = %s, cover_url = %s, read_url = %s, epub_url = %s, download_url = %s WHERE title = %s",
+                (price, cover_url, read_url, epub_url, download_url, title),
+                is_write=True
+            )
+            print(f"Book '{title}' already exists. Updated price to {price} and live links.")
+        else:
+            # Insert new book
+            execute_query(
+                """
+                INSERT INTO books (id, title, author, cover_url, description, genre, gutendex_id, read_url, epub_url, download_url, price)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (db_id, title, author, cover_url, description, genre, gid, read_url, epub_url, download_url, price),
+                is_write=True
+            )
+            print(f"Inserted Gutendex book: '{title}' ({genre})")
+
+    print("Defining Modern Bestsellers (Google Books)...")
+    google_books = [
+        # Fiction
+        {"title": "The Midnight Library", "author": "Matt Haig", "genre": "Fiction"},
+        {"title": "The Seven Husbands of Evelyn Hugo", "author": "Taylor Jenkins Reid", "genre": "Fiction"},
+        {"title": "Where the Crawdads Sing", "author": "Delia Owens", "genre": "Fiction"},
+        {"title": "Normal People", "author": "Sally Rooney", "genre": "Fiction"},
+        {"title": "Lessons in Chemistry", "author": "Bonnie Garmus", "genre": "Fiction"},
+        # Thriller
+        {"title": "The Silent Patient", "author": "Alex Michaelides", "genre": "Thriller"},
+        {"title": "Gone Girl", "author": "Gillian Flynn", "genre": "Thriller"},
+        {"title": "The Girl with the Dragon Tattoo", "author": "Stieg Larsson", "genre": "Thriller"},
+        {"title": "The Da Vinci Code", "author": "Dan Brown", "genre": "Thriller"},
+        {"title": "Verity", "author": "Colleen Hoover", "genre": "Thriller"},
+        # Self-Help and Business
+        {"title": "Atomic Habits", "author": "James Clear", "genre": "Self-Help and Business"},
+        {"title": "The Psychology of Money", "author": "Morgan Housel", "genre": "Self-Help and Business"},
+        {"title": "Zero to One", "author": "Peter Thiel", "genre": "Self-Help and Business"},
+        {"title": "Thinking Fast and Slow", "author": "Daniel Kahneman", "genre": "Self-Help and Business"},
+        {"title": "Start With Why", "author": "Simon Sinek", "genre": "Self-Help and Business"},
+        # Technology
+        {"title": "The Coming Wave", "author": "Mustafa Suleyman", "genre": "Technology"},
+        {"title": "Chip War", "author": "Chris Miller", "genre": "Technology"},
+        {"title": "Life 3.0", "author": "Max Tegmark", "genre": "Technology"},
+        {"title": "The Innovators", "author": "Walter Isaacson", "genre": "Technology"},
+        {"title": "Weapons of Math Destruction", "author": "Cathy O'Neil", "genre": "Technology"},
+        # Biography
+        {"title": "Becoming", "author": "Michelle Obama", "genre": "Biography"},
+        {"title": "Educated", "author": "Tara Westover", "genre": "Biography"},
+        {"title": "Born a Crime", "author": "Trevor Noah", "genre": "Biography"},
+        {"title": "Shoe Dog", "author": "Phil Knight", "genre": "Biography"},
+        {"title": "Spare", "author": "Prince Harry", "genre": "Biography"}
+    ]
+
+    print("Fetching and Seeding Google Books...")
+    for item in google_books:
+        title = item["title"]
+        author = item["author"]
+        genre = item["genre"]
+        
+        # Check if already exists by title first to avoid unnecessary API call
+        existing = execute_query("SELECT id FROM books WHERE title = %s", (title,))
+        if existing:
+            # Update price anyway
+            execute_query("UPDATE books SET price = %s WHERE title = %s", ("Ksh. 200", title), is_write=True)
+            print(f"Book '{title}' already exists. Updated price to Ksh. 200.")
+            continue
+            
+        print(f"Fetching Google Book: '{title}' by {author}...")
+        url = "https://www.googleapis.com/books/v1/volumes"
+        params = {"q": f"intitle:{title} inauthor:{author}"}
+        if settings.GEMINI_API_KEY and not settings.GEMINI_API_KEY.startswith("your") and "MY_GEMINI" not in settings.GEMINI_API_KEY:
+            params["key"] = settings.GEMINI_API_KEY
+            
+        volume_info = None
+        google_id = None
+        try:
+            resp = httpx.get(url, params=params, timeout=15.0)
+            if resp.status_code == 200:
+                results = resp.json().get("items", [])
+                if results:
+                    volume_info = results[0].get("volumeInfo", {})
+                    google_id = results[0].get("id")
+            if not volume_info:
+                # Try fallback search with just intitle
+                params_fallback = {"q": f"intitle:{title}"}
+                if settings.GEMINI_API_KEY and not settings.GEMINI_API_KEY.startswith("your") and "MY_GEMINI" not in settings.GEMINI_API_KEY:
+                    params_fallback["key"] = settings.GEMINI_API_KEY
+                resp = httpx.get(url, params=params_fallback, timeout=15.0)
+                if resp.status_code == 200:
+                    results = resp.json().get("items", [])
+                    if results:
+                        volume_info = results[0].get("volumeInfo", {})
+                        google_id = results[0].get("id")
+        except Exception as e:
+            print(f"Error fetching Google book '{title}': {e}")
+            
+        # Parse fields with fallbacks
+        if volume_info:
+            fetched_title = volume_info.get("title", title)
+            fetched_authors = volume_info.get("authors", [])
+            fetched_author = ", ".join(fetched_authors) if fetched_authors else author
+            
+            image_links = volume_info.get("imageLinks", {})
+            cover_url = image_links.get("thumbnail") or image_links.get("smallThumbnail") or ""
+            if cover_url.startswith("http://"):
+                cover_url = cover_url.replace("http://", "https://")
+                
+            description = volume_info.get("description", "A modern bestseller.")
+            read_url = volume_info.get("previewLink", "")
+            if read_url.startswith("http://"):
+                read_url = read_url.replace("http://", "https://")
+        else:
+            fetched_title = title
+            fetched_author = author
+            cover_url = ""
+            description = "A modern bestseller."
+            read_url = ""
+            google_id = f"fallback_{slugify(title)}"
+            
+        if not cover_url:
+            title_slug = slugify(fetched_title)
+            cover_url = f"https://picsum.photos/seed/book_{title_slug}/200/300"
+            
+        db_id = f"gb{google_id}"
+        price = "Ksh. 200"
+        
+        # Double check existence by fetched_title (in case the query matched a slightly different title already in DB)
+        existing_fetched = execute_query("SELECT id FROM books WHERE title = %s", (fetched_title,))
+        if existing_fetched:
+            execute_query("UPDATE books SET price = %s, cover_url = %s, read_url = %s WHERE title = %s", (price, cover_url, read_url, fetched_title), is_write=True)
+            print(f"Book '{fetched_title}' already exists. Updated price to {price} and live links.")
+        else:
+            execute_query(
+                """
+                INSERT INTO books (id, title, author, cover_url, description, genre, gutendex_id, read_url, epub_url, download_url, price)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (db_id, fetched_title, fetched_author, cover_url, description, genre, None, read_url, "", "", price),
+                is_write=True
+            )
+            print(f"Inserted Google Book: '{fetched_title}' ({genre})")
 
     print("Seeding Audiobooks...")
     audiobooks = [

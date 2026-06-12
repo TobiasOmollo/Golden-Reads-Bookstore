@@ -30,6 +30,7 @@ class SeededBook(Base):
     read_url = Column(Text)
     epub_url = Column(Text)
     download_url = Column(Text)
+    price = Column(String(50))
 
 class SeededAudiobook(Base):
     __tablename__ = "audiobooks"
