@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
+    DATABASE_URL: str = "sqlite:///readers.db"
     PODCAST_INDEX_KEY: str = ""
     PODCAST_INDEX_SECRET: str = ""
     GEMINI_API_KEY: str = ""

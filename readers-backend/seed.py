@@ -10,6 +10,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "reader
 from app.routers.auth import hash_password
 from app.services.db import init_db, execute_query
 from app.config import settings
+from app.database import engine
 
 def slugify(text):
     text = text.lower()
@@ -26,6 +27,16 @@ def seed_data():
         print("Successfully ensured price column exists.")
     except Exception as e:
         print("Price column already exists or skipped:", e)
+
+    print("Ensuring DB schema has unique title constraint...")
+    try:
+        if engine.dialect.name == "postgresql":
+            execute_query("ALTER TABLE books ADD CONSTRAINT unique_title UNIQUE (title)", is_write=True)
+        else:
+            execute_query("CREATE UNIQUE INDEX IF NOT EXISTS idx_books_title ON books(title)", is_write=True)
+        print("Successfully ensured unique title constraint exists.")
+    except Exception as e:
+        print("Unique title constraint/index already exists or skipped:", e)
 
     print("Seeding Users...")
     user_sql = """
@@ -162,26 +173,17 @@ def seed_data():
         price = "Ksh. 100"
         db_id = f"g{gid}"
 
-        # Double check idempotency on title field (in case the fetched title is slightly different)
-        existing_fetched = execute_query("SELECT id FROM books WHERE title = %s", (title,))
-        if existing_fetched:
-            execute_query(
-                "UPDATE books SET price = %s, cover_url = %s, read_url = %s, epub_url = %s, download_url = %s WHERE title = %s",
-                (price, cover_url, read_url, epub_url, download_url, title),
-                is_write=True
-            )
-            print(f"Book '{title}' already exists. Updated price to {price} and live links.")
-        else:
-            # Insert new book
-            execute_query(
-                """
-                INSERT INTO books (id, title, author, cover_url, description, genre, gutendex_id, read_url, epub_url, download_url, price)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (db_id, title, author, cover_url, description, genre, gid, read_url, epub_url, download_url, price),
-                is_write=True
-            )
-            print(f"Inserted Gutendex book: '{title}' ({genre})")
+        # Insert book (idempotent via ON CONFLICT on title)
+        execute_query(
+            """
+            INSERT INTO books (id, title, author, cover_url, description, genre, gutendex_id, read_url, epub_url, download_url, price)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (title) DO NOTHING
+            """,
+            (db_id, title, author, cover_url, description, genre, gid, read_url, epub_url, download_url, price),
+            is_write=True
+        )
+        print(f"Processed Gutendex book: '{title}' ({genre})")
 
     print("Defining Modern Bestsellers (Google Books)...")
     google_books = [
@@ -290,21 +292,17 @@ def seed_data():
         db_id = f"gb{google_id}"
         price = "Ksh. 200"
         
-        # Double check existence by fetched_title (in case the query matched a slightly different title already in DB)
-        existing_fetched = execute_query("SELECT id FROM books WHERE title = %s", (fetched_title,))
-        if existing_fetched:
-            execute_query("UPDATE books SET price = %s, cover_url = %s, read_url = %s WHERE title = %s", (price, cover_url, read_url, fetched_title), is_write=True)
-            print(f"Book '{fetched_title}' already exists. Updated price to {price} and live links.")
-        else:
-            execute_query(
-                """
-                INSERT INTO books (id, title, author, cover_url, description, genre, gutendex_id, read_url, epub_url, download_url, price)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """,
-                (db_id, fetched_title, fetched_author, cover_url, description, genre, None, read_url, "", "", price),
-                is_write=True
-            )
-            print(f"Inserted Google Book: '{fetched_title}' ({genre})")
+        # Insert Google Book (idempotent via ON CONFLICT on title)
+        execute_query(
+            """
+            INSERT INTO books (id, title, author, cover_url, description, genre, gutendex_id, read_url, epub_url, download_url, price)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ON CONFLICT (title) DO NOTHING
+            """,
+            (db_id, fetched_title, fetched_author, cover_url, description, genre, None, read_url, "", "", price),
+            is_write=True
+        )
+        print(f"Processed Google Book: '{fetched_title}' ({genre})")
 
     print("Seeding Audiobooks...")
     audiobooks = [

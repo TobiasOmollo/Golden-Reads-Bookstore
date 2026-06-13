@@ -21,7 +21,7 @@ class SeededBook(Base):
     __tablename__ = "books"
 
     id = Column(String(255), primary_key=True)
-    title = Column(String(255), nullable=False)
+    title = Column(String(255), unique=True, nullable=False)
     author = Column(String(255))
     cover_url = Column(Text)
     description = Column(Text)
