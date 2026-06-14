@@ -1,6 +1,6 @@
 import json
 from fastapi import APIRouter, Query, HTTPException
-from typing import List
+from typing import List, Optional
 from app.models.schemas import AudiobookDetail, AudiobookChapter
 from app.services.librivox import librivox_service
 from app.services.db import execute_query
