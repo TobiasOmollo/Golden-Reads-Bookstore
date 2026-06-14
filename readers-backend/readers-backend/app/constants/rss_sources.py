@@ -14,6 +14,21 @@ RSS_SOURCES = [
         "category": "local-briefing",
         "language": "en"
     },
+    {
+        "name": "Nation Africa",
+        "url": "https://nation.africa/kenya/rss.xml",
+        "country": "KE",
+        "category": "local-briefing",
+        "language": "en"
+    },
+    {
+        "name": "Kenya News Agency",
+        "url": "https://kenyanews.go.ke/feed",
+        "country": "KE",
+        "category": "local-briefing",
+        "language": "en"
+    },
+
 
     # --- SECTION 2: FLOSSY GOSSIP ---
     {
@@ -133,8 +148,15 @@ RSS_SOURCES = [
 
     # --- SECTION 4: GLOBAL FEED ---
     {
-        "name": "Al Jazeera English",
-        "url": "https://www.aljazeera.com/xml/rss/all.xml",
+        "name": "AP News",
+        "url": "http://associated-press.s3-website-us-east-1.amazonaws.com/topnews.xml",
+        "country": "PAN",
+        "category": "global-feed",
+        "language": "en"
+    },
+    {
+        "name": "Financial Times",
+        "url": "https://www.ft.com/world/?format=rss",
         "country": "PAN",
         "category": "global-feed",
         "language": "en"

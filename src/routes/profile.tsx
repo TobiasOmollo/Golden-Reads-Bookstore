@@ -3,6 +3,8 @@ import { ChevronRight, Settings, Award, Bell, Shield, Download, LogOut } from "l
 import { AppShell } from "@/components/layout/AppShell";
 import { useTheme } from "@/store/theme";
 import { useEffect, useState } from "react";
+import { api } from "@/lib/api/client";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -17,9 +19,22 @@ export const Route = createFileRoute("/profile")({
 function ProfilePage() {
   const { theme, toggle } = useTheme();
   const [user, setUser] = useState<any>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+
+  const fetchUser = async () => {
+    try {
+      const profile = await api.auth.me();
+      setUser(profile);
+      sessionStorage.setItem("user", JSON.stringify(profile));
+    } catch (e) {
+      console.error("Failed to fetch current user:", e);
+      const session = sessionStorage.getItem("user");
+      if (session) setUser(JSON.parse(session));
+    }
+  };
+
   useEffect(() => {
-    const session = sessionStorage.getItem("user");
-    if (session) setUser(JSON.parse(session));
+    fetchUser();
   }, []);
 
   return (
@@ -38,12 +53,73 @@ function ProfilePage() {
           <div className="flex-1">
             <p className="font-display text-xl font-semibold">{user?.name}</p>
             <p className="text-xs text-primary-foreground/70">{user?.email}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className={`px-2 py-0.5 text-[9px] font-mono uppercase tracking-wider rounded-full border ${
+                user?.subscription_tier === "premium"
+                  ? "bg-gold/20 border-gold text-gold font-bold"
+                  : "bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground"
+              }`}>
+                {user?.subscription_tier || "free"} tier
+              </span>
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-3 mt-5">
           <Mini label="Goal" value={`${user?.readingGoal || 12}/yr`} />
-          <Mini label="Read" value="14" />
+          <Mini label="Read" value={`${user?.accessed_books?.length || 0}`} />
           <Mini label="Streak" value="12d" />
+        </div>
+      </section>
+
+      {/* Subscription & Usage Section */}
+      <section className="mx-5 mt-4 p-5 rounded-2xl bg-surface border border-divider">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Subscription & Usage</h3>
+            <p className="text-sm font-semibold capitalize mt-0.5">{user?.subscription_tier || "free"}</p>
+          </div>
+          {user?.subscription_tier !== "premium" && (
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="px-3.5 py-1.5 rounded-lg bg-gold text-gold-foreground text-xs font-semibold hover:bg-gold/90 transition-colors font-mono uppercase tracking-wider"
+            >
+              Upgrade
+            </button>
+          )}
+        </div>
+        
+        <div className="space-y-4">
+          {/* Ebook count progress bar */}
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-muted-foreground">Ebooks Read</span>
+              <span className="font-mono text-xs">
+                {user?.subscription_tier === "premium" ? `${user?.accessed_books?.length || 0} / Unlimited` : `${user?.accessed_books?.length || 0} / 6`}
+              </span>
+            </div>
+            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-gold h-full transition-all duration-300"
+                style={{ width: `${Math.min(((user?.accessed_books?.length || 0) / (user?.subscription_tier === "premium" ? Math.max(1, user?.accessed_books?.length) : 6)) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Audiobook count progress bar */}
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-muted-foreground">Audiobooks Listened</span>
+              <span className="font-mono text-xs">
+                {user?.subscription_tier === "premium" ? `${user?.accessed_audiobooks?.length || 0} / Unlimited` : `${user?.accessed_audiobooks?.length || 0} / 4`}
+              </span>
+            </div>
+            <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-gold h-full transition-all duration-300"
+                style={{ width: `${Math.min(((user?.accessed_audiobooks?.length || 0) / (user?.subscription_tier === "premium" ? Math.max(1, user?.accessed_audiobooks?.length) : 4)) * 100, 100)}%` }}
+              />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -92,6 +168,12 @@ function ProfilePage() {
       <p className="text-center font-mono text-[10px] text-muted-foreground mt-10 mb-4">
         GOLDEN READS · v1.0
       </p>
+
+      <UpgradeModal
+        isOpen={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        onSuccess={fetchUser}
+      />
     </AppShell>
   );
 }

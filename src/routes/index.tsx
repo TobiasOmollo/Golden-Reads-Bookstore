@@ -60,22 +60,43 @@ function HomePage() {
     }
   }, []);
 
-  const { data: trending = [], isLoading } = useQuery({
+  const { data: trending = [], isLoading: isLoadingTrending } = useQuery({
     queryKey: ["books", "trending"],
     queryFn: api.books.trending,
   });
 
+  const { data: techBooks = [], isLoading: isTechLoading } = useQuery({
+    queryKey: ["books", "genre", "Technology"],
+    queryFn: () => api.books.search({ q: "", genre: "Technology" }),
+  });
+
+  const { data: businessBooks = [], isLoading: isBusinessLoading } = useQuery({
+    queryKey: ["books", "genre", "Business"],
+    queryFn: () => api.books.search({ q: "", genre: "Business" }),
+  });
+
+  const { data: fictionBooks = [], isLoading: isFictionLoading } = useQuery({
+    queryKey: ["books", "genre", "Fiction"],
+    queryFn: () => api.books.search({ q: "", genre: "Fiction" }),
+  });
+
+  const { data: audioBooks = [], isLoading: isAudioLoading } = useQuery({
+    queryKey: ["books", "genre", "Audiobook"],
+    queryFn: () => api.books.search({ q: "", genre: "Audiobook" }),
+  });
+
   const books = trending;
+  const isLoading = isLoadingTrending || isTechLoading || isBusinessLoading || isFictionLoading || isAudioLoading;
 
   const sections: { title: string; href: string; books: Book[] }[] = [
     { title: "Trending Now", href: "/discover", books: books.slice(0, 10) },
     { title: "Best Sellers", href: "/discover", books: [...books].sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 10) },
     { title: "New Releases", href: "/discover", books: [...books].reverse().slice(0, 10) },
     { title: "Recommended For You", href: "/discover", books: books.slice(4, 14) },
-    { title: "Technology Books", href: "/discover", books: byGenre(books, "Technology") },
-    { title: "Business Books", href: "/discover", books: byGenre(books, "Business") },
-    { title: "Fiction Collection", href: "/discover", books: byGenre(books, "Fiction") },
-    { title: "Audiobooks", href: "/discover", books: books.filter((b) => b.formats?.includes?.("audio") ?? false).slice(0, 10) },
+    { title: "Technology Books", href: "/discover", books: techBooks.slice(0, 10) },
+    { title: "Business Books", href: "/discover", books: businessBooks.slice(0, 10) },
+    { title: "Fiction Collection", href: "/discover", books: fictionBooks.slice(0, 10) },
+    { title: "Audiobooks", href: "/discover", books: audioBooks.slice(0, 10) },
   ];
 
   return (

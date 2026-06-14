@@ -244,3 +244,42 @@ async def proxy_cover(id: str):
         except Exception:
             raise HTTPException(status_code=502, detail="Failed to fetch book cover image assets.")
 
+from fastapi import Depends
+from app.routers.auth import get_current_user
+from app.database import get_db
+from sqlalchemy.orm import Session
+from app.models.models import User
+import json
+
+@router.post("/{id}/access")
+async def access_book(
+    id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.subscription_tier == "premium":
+        return {"status": "granted", "tier": "premium", "count": 0, "limit": 6}
+
+    accessed_books = []
+    if current_user.accessed_books:
+        try:
+            accessed_books = json.loads(current_user.accessed_books)
+        except Exception:
+            pass
+
+    if id in accessed_books:
+        return {"status": "granted", "tier": "free", "count": len(accessed_books), "limit": 6}
+
+    if len(accessed_books) >= 6:
+        raise HTTPException(
+            status_code=403,
+            detail="Free ebook tier limit reached. Please upgrade to Premium."
+        )
+
+    # Allow access and track
+    accessed_books.append(id)
+    current_user.accessed_books = json.dumps(accessed_books)
+    db.commit()
+    return {"status": "granted", "tier": "free", "count": len(accessed_books), "limit": 6}
+
+

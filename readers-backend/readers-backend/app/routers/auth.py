@@ -73,6 +73,20 @@ def db_get_user(db: Session, email: str) -> Optional[dict]:
         except Exception:
             pref_formats = [f.strip() for f in user.preferred_formats.split(",") if f.strip()]
             
+    acc_books = []
+    if user.accessed_books:
+        try:
+            acc_books = json.loads(user.accessed_books)
+        except Exception:
+            pass
+
+    acc_audios = []
+    if user.accessed_audiobooks:
+        try:
+            acc_audios = json.loads(user.accessed_audiobooks)
+        except Exception:
+            pass
+
     profile = {
         "id": f"u_{user.email}",
         "name": user.name,
@@ -80,7 +94,10 @@ def db_get_user(db: Session, email: str) -> Optional[dict]:
         "avatar": user.avatar or f"https://i.pravatar.cc/200?img=1",
         "genres": genres,
         "readingGoal": user.reading_goal or 12,
-        "preferredFormats": pref_formats
+        "preferredFormats": pref_formats,
+        "subscription_tier": user.subscription_tier or "free",
+        "accessed_books": acc_books,
+        "accessed_audiobooks": acc_audios
     }
     
     return {
@@ -229,6 +246,53 @@ async def google_auth(payload: GoogleLoginPayload, db: Session = Depends(get_db)
     return {
         "access_token": access_token,
         "token_type": "bearer",
+        "user": user_data["profile"]
+    }
+
+from fastapi import Header
+
+def get_current_user(authorization: Optional[str] = Header(None), db: Session = Depends(get_db)) -> User:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication token is missing or invalid."
+        )
+    token = authorization.split(" ")[1]
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("sub")
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token payload."
+            )
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials."
+        )
+    
+    user = db.query(User).filter(User.email == email.lower().strip()).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found."
+        )
+    return user
+
+@router.get("/me")
+async def get_me(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    user_data = db_get_user(db, current_user.email)
+    return user_data["profile"]
+
+@router.post("/upgrade")
+async def upgrade_user(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    current_user.subscription_tier = "premium"
+    db.commit()
+    db.refresh(current_user)
+    user_data = db_get_user(db, current_user.email)
+    return {
+        "status": "success",
         "user": user_data["profile"]
     }
 

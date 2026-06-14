@@ -15,40 +15,78 @@ def _strip_html(text: str) -> str:
 
 def _extract_image(entry) -> str:
     """Try multiple feed fields to find a usable image URL."""
-    for attr in ['media_content', 'media_thumbnail']:
-        val = getattr(entry, attr, None)
-        if val and isinstance(val, list) and val[0].get('url'):
-            return val[0]['url']
+    # Check media_thumbnail
+    media_thumbnail = getattr(entry, 'media_thumbnail', None)
+    if media_thumbnail:
+        if isinstance(media_thumbnail, list) and len(media_thumbnail) > 0:
+            url = media_thumbnail[0].get('url') or media_thumbnail[0].get('href')
+            if url:
+                return url
+        elif isinstance(media_thumbnail, dict):
+            url = media_thumbnail.get('url') or media_thumbnail.get('href')
+            if url:
+                return url
+        elif isinstance(media_thumbnail, str):
+            return media_thumbnail
+
+    # Check media_content
+    media_content = getattr(entry, 'media_content', None)
+    if media_content:
+        if isinstance(media_content, list) and len(media_content) > 0:
+            url = media_content[0].get('url') or media_content[0].get('href')
+            if url:
+                return url
+        elif isinstance(media_content, dict):
+            url = media_content.get('url') or media_content.get('href')
+            if url:
+                return url
+
+    # Check enclosures
     enclosures = getattr(entry, 'enclosures', [])
     for enc in enclosures:
-        if enc.get('type', '').startswith('image'):
+        if enc.get('type', '').startswith('image') or enc.get('href', '').endswith(('.jpg', '.jpeg', '.png', '.webp', '.gif')):
             return enc.get('href', '')
+
+    # Check content values
     content = getattr(entry, 'content', [])
     for c in content:
         match = re.search(r'<img[^>]+src=["\'](https?://[^"\']+)["\'\]', c.get('value',''))
         if match:
             return match.group(1)
+
+    # Check summary/description values for standard img tags
+    for attr in ['summary', 'description']:
+        val = entry.get(attr, '')
+        if val:
+            match = re.search(r'<img[^>]+src=["\'](https?://[^"\']+)["\'\]', val)
+            if match:
+                return match.group(1)
+
     return ''
 
 def _make_id(url: str) -> str:
     return hashlib.sha256(url.encode()).hexdigest()[:12]
 
-def _parse_feed(source: dict) -> list[Article]:
-    """Synchronous feedparser call — must be run in a thread."""
+def _parse_feed_content(content: bytes, source: dict) -> list[Article]:
+    """Parse raw feed content with feedparser."""
     try:
-        feed = feedparser.parse(source['url'])
-    except Exception:
+        feed = feedparser.parse(content)
+    except Exception as exc:
+        print(f"[rss_service] parser error for {source['name']}: {exc}")
         return []
     articles = []
-    for entry in feed.entries[:20]:   # max 20 per feed
+    for entry in feed.entries[:30]:   # fetch up to 30 as required
         url = entry.get('link', '')
         if not url:
             continue
         published = ''
         if hasattr(entry, 'published_parsed') and entry.published_parsed:
             import calendar
-            published = time.strftime('%Y-%m-%dT%H:%M:%SZ',
-                                      time.gmtime(calendar.timegm(entry.published_parsed)))
+            try:
+                published = time.strftime('%Y-%m-%dT%H:%M:%SZ',
+                                          time.gmtime(calendar.timegm(entry.published_parsed)))
+            except Exception:
+                pass
         summary_raw = entry.get('summary', '') or entry.get('description', '')
         summary = _strip_html(summary_raw)[:280]
         articles.append(Article(
@@ -65,14 +103,23 @@ def _parse_feed(source: dict) -> list[Article]:
     return articles
 
 async def fetch_feed(source: dict) -> list[Article]:
-    """Async wrapper with per-source in-memory cache."""
+    """Async wrapper with per-source in-memory cache and httpx fetch with SSL bypass + User-Agent."""
     key = source['url']
     if key in _cache:
         cached_articles, ts = _cache[key]
         if time.time() - ts < CACHE_TTL:
             return cached_articles
     try:
-        articles = await asyncio.to_thread(_parse_feed, source)
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+        # bypass SSL verification and set timeout
+        async with httpx.AsyncClient(verify=False, timeout=10.0) as client:
+            resp = await client.get(source['url'], headers=headers)
+            resp.raise_for_status()
+            content = resp.content
+            
+        articles = await asyncio.to_thread(_parse_feed_content, content, source)
         _cache[key] = (articles, time.time())
         return articles
     except Exception as exc:

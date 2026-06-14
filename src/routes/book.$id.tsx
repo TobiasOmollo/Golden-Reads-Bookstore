@@ -15,12 +15,8 @@ import { safeCoverUrl } from "@/lib/utils";
 import type { Book } from "@/types";
 import BookReader from "@/components/book/BookReader";
 import AiAssistant from "@/components/ai/AiAssistant";
+import { UpgradeModal } from "@/components/UpgradeModal";
 
-const getBookPrice = (book: any): string => {
-  const isLargeBook = (book.download_count ?? 0) > 1000 || 
-                       (book.description?.length ?? 0) > 2000;
-  return isLargeBook ? "Ksh. 200" : "Ksh. 100";
-};
 
 export const Route = createFileRoute("/book/$id")({
   loader: ({ params }) => {
@@ -70,6 +66,23 @@ function BookDetail() {
   const [reading, setReading] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [highlightedText, setHighlightedText] = useState<{ text: string; context: string } | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [hasAudioStreamAccess, setHasAudioStreamAccess] = useState(false);
+
+  const handleAccess = async (onAccessGranted: () => void) => {
+    try {
+      const isAudio = id.startsWith("a") || book.formats?.includes?.("audio");
+      const res = isAudio ? await api.audio.access(book.id) : await api.books.access(book.id);
+      if (res.status === "granted") {
+        onAccessGranted();
+      } else {
+        setUpgradeOpen(true);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setUpgradeOpen(true);
+    }
+  };
 
 
   const firstGenre = Array.isArray(book?.genre) ? book?.genre[0] : (book?.genre || "");
@@ -186,32 +199,42 @@ function BookDetail() {
           {(book.read_url || book.epub_url || book.download_url) && (
             <div className="mt-6 space-y-2.5">
               {book.read_url && (
-                <a
-                  href={book.read_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    handleAccess(() => {
+                      window.open(book.read_url, "_blank", "noopener,noreferrer");
+                    });
+                  }}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gold/10 text-gold font-mono text-[11px] uppercase tracking-wider font-bold border border-gold/20 hover:bg-gold/25 transition-colors"
                 >
                   <BookOpen size={14} />
                   Read Online
-                </a>
+                </button>
               )}
               <div className="grid grid-cols-2 gap-2">
                 {book.epub_url && (
-                  <a
-                    href={book.epub_url}
+                  <button
+                    onClick={() => {
+                      handleAccess(() => {
+                        window.open(book.epub_url, "_blank", "noopener,noreferrer");
+                      });
+                    }}
                     className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-divider text-muted-foreground font-mono text-[10px] uppercase tracking-wider hover:text-foreground hover:border-muted-foreground transition-colors"
                   >
                     Download EPUB
-                  </a>
+                  </button>
                 )}
                 {book.download_url && (
-                  <a
-                    href={book.download_url}
+                  <button
+                    onClick={() => {
+                      handleAccess(() => {
+                        window.open(book.download_url, "_blank", "noopener,noreferrer");
+                      });
+                    }}
                     className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-divider text-muted-foreground font-mono text-[10px] uppercase tracking-wider hover:text-foreground hover:border-muted-foreground transition-colors"
                   >
                     Download Text
-                  </a>
+                  </button>
                 )}
               </div>
             </div>
@@ -221,17 +244,32 @@ function BookDetail() {
           {(book.listen_url || book.stream_url) && (
             <div className="mt-6 space-y-2.5">
               {book.listen_url && (
-                <a
-                  href={book.listen_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    handleAccess(() => {
+                      window.open(book.listen_url, "_blank", "noopener,noreferrer");
+                    });
+                  }}
                   className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gold/10 text-gold font-mono text-[11px] uppercase tracking-wider font-bold border border-gold/20 hover:bg-gold/25 transition-colors"
                 >
+                  <Headphones size={14} />
                   Download & Listen
-                </a>
+                </button>
               )}
               {book.stream_url && (
-                <audio controls src={book.stream_url} className="w-full mt-4" />
+                <div className="mt-4">
+                  {hasAudioStreamAccess ? (
+                    <audio controls src={book.stream_url} className="w-full" autoPlay />
+                  ) : (
+                    <button
+                      onClick={() => handleAccess(() => setHasAudioStreamAccess(true))}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-gold/10 text-gold font-mono text-[11px] uppercase tracking-wider font-bold border border-gold/20 hover:bg-gold/25 transition-colors"
+                    >
+                      <Headphones size={14} />
+                      Unlock & Stream Audio
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -276,9 +314,9 @@ function BookDetail() {
       >
         <div className="max-w-md mx-auto px-5 py-3 flex items-center gap-2">
           <div className="flex-1">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Price</p>
-            <span className="inline-block px-3 py-1 text-sm font-semibold bg-gold/15 text-gold rounded-full border border-gold/20 mt-0.5">
-              {getBookPrice(book)}
+            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Genre</p>
+            <span className="inline-block px-3 py-0.5 text-xs font-mono uppercase tracking-wider text-gold border border-gold rounded-full bg-transparent mt-1.5">
+              {(Array.isArray(book.genre) ? book.genre[0] : Array.isArray(book.genres) ? book.genres[0] : typeof book.genre === 'string' ? book.genre : 'Fiction') || 'Fiction'}
             </span>
           </div>
           <button
@@ -290,8 +328,10 @@ function BookDetail() {
           </button>
           <button
             onClick={() => {
-              upsert(book.id, 1);
-              setReading(true);
+              handleAccess(() => {
+                upsert(book.id, 1);
+                setReading(true);
+              });
             }}
             className="px-4 h-11 rounded-full bg-muted text-foreground text-sm font-medium cursor-pointer"
           >
@@ -330,6 +370,15 @@ function BookDetail() {
       )}
 
       <Link to="/" className="hidden" />
+
+      <UpgradeModal
+        isOpen={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        onSuccess={() => {
+          // Re-trigger/refresh page
+          window.location.reload();
+        }}
+      />
     </div>
   );
 }

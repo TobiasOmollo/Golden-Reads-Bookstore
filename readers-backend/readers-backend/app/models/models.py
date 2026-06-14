@@ -16,6 +16,9 @@ class User(Base):
     genres = Column(Text)  # JSON serialized list
     preferred_formats = Column(Text)  # JSON serialized list
     avatar = Column(String(255))
+    subscription_tier = Column(String(50), default="free")
+    accessed_books = Column(Text, default="[]")
+    accessed_audiobooks = Column(Text, default="[]")
 
 class SeededBook(Base):
     __tablename__ = "books"

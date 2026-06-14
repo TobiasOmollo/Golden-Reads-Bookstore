@@ -69,6 +69,29 @@ export function normalizeAudiobook(raw: any): AudiobookDetail {
   };
 }
 
+export function mapAudiobookToBook(audiobook: any): Book {
+  const coverUrl = audiobook.cover_url || audiobook.cover || "";
+  return {
+    id: audiobook.id.startsWith("a") ? audiobook.id : `a${audiobook.id}`,
+    title: audiobook.title || "Unknown Title",
+    author: audiobook.author || "Unknown Author",
+    cover_url: coverUrl,
+    cover: coverUrl,
+    description: audiobook.description || "",
+    genre: ["Audiobook"],
+    genres: ["Audiobook"],
+    rating: 4.5,
+    price: 0,
+    pages: 150,
+    readingTime: 120,
+    formats: ["audio"],
+    librivoxId: audiobook.id,
+    read_url: "",
+    epub_url: "",
+    download_url: "",
+  };
+}
+
 export const api = {
   books: {
     discover: async (q: string): Promise<Book[]> => {
@@ -79,8 +102,23 @@ export const api = {
       const res = await get<Book[]>('/books/trending');
       return (res || []).map(normalizeBook);
     },
-    search: async (q: string, genre = ""): Promise<Book[]> => {
-      const res = await get<Book[]>(`/books/search?q=${encodeURIComponent(q)}&genre=${encodeURIComponent(genre)}`);
+    search: async (paramsOrQ: string | { q?: string; genre?: string }, genre = ""): Promise<Book[]> => {
+      let qStr = "";
+      let genreStr = "";
+      if (typeof paramsOrQ === "object" && paramsOrQ !== null) {
+        qStr = paramsOrQ.q ?? "";
+        genreStr = paramsOrQ.genre ?? "";
+      } else {
+        qStr = paramsOrQ ?? "";
+        genreStr = genre ?? "";
+      }
+
+      if (genreStr === "Audiobook") {
+        const res = await get<any[]>(`/audio/search?q=${encodeURIComponent(qStr)}`);
+        return (res || []).map(mapAudiobookToBook);
+      }
+
+      const res = await get<Book[]>(`/books/search?q=${encodeURIComponent(qStr)}&genre=${encodeURIComponent(genreStr)}`);
       return (res || []).map(normalizeBook);
     },
     detail: async (id: string): Promise<Book> => {
@@ -92,6 +130,10 @@ export const api = {
       openLibraryId
         ? `https://covers.openlibrary.org/b/id/${openLibraryId}-L.jpg`
         : `${BASE}/books/${id}/cover`,
+    access: async (id: string): Promise<{ status: string; tier: string; count: number; limit: number }> => {
+      const cleanId = id.startsWith('g') ? id.slice(1) : id;
+      return post<{ status: string; tier: string; count: number; limit: number }>(`/books/${cleanId}/access`, {});
+    },
   },
   audio: {
     search: async (q: string): Promise<AudiobookDetail[]> => {
@@ -101,6 +143,10 @@ export const api = {
     detail: async (id: string): Promise<AudiobookDetail> => {
       const res = await get<AudiobookDetail>(`/audio/${id}`);
       return normalizeAudiobook(res);
+    },
+    access: async (id: string): Promise<{ status: string; tier: string; count: number; limit: number }> => {
+      const cleanId = id.startsWith('a') ? id.slice(1) : id;
+      return post<{ status: string; tier: string; count: number; limit: number }>(`/audio/${cleanId}/access`, {});
     },
   },
   podcasts: {
@@ -166,6 +212,12 @@ export const api = {
     },
     google: async (token: string) => {
       return post<{ access_token: string; token_type: string; user: any }>("/auth/google", { token });
+    },
+    me: async () => {
+      return get<any>("/auth/me");
+    },
+    upgrade: async () => {
+      return post<{ status: string; user: any }>("/auth/upgrade", {});
     },
   },
 };

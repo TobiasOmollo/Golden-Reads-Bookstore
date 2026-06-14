@@ -17,6 +17,73 @@ def slugify(text):
     text = re.sub(r'[^a-z0-9]+', '_', text)
     return text.strip('_')
 
+def fetch_and_map_librivox_book(librivox_id: str) -> dict:
+    url = f"https://librivox.org/api/feed/audiobooks?id={librivox_id}&format=json&extended=1"
+    resp = httpx.get(url, timeout=15.0)
+    resp.raise_for_status()
+    books = resp.json().get("books", [])
+    if not books:
+        raise Exception(f"No books found for ID {librivox_id}")
+    item = books[0]
+    
+    # Extract details
+    authors_raw = item.get("authors", [])
+    authors = [
+        f"{a.get('first_name', '')} {a.get('last_name', '')}".strip()
+        for a in authors_raw
+    ]
+    author = ", ".join(authors) if authors else "Unknown Author"
+    cover_url = f"https://archive.org/services/img/{librivox_id}"
+    
+    sections = item.get("sections") or []
+    if not isinstance(sections, list):
+        sections = []
+    chapters = []
+    for s in sections:
+        if not isinstance(s, dict):
+            continue
+        sec_id = str(s.get("id") or s.get("section_number") or "")
+        sec_title = s.get("title") or f"Chapter {s.get('section_number')}"
+        duration_str = s.get("playtime") or "0"
+        
+        duration = 0
+        try:
+            parts = list(map(int, duration_str.split(":")))
+            if len(parts) == 3:
+                duration = parts[0] * 3600 + parts[1] * 60 + parts[2]
+            elif len(parts) == 2:
+                duration = parts[0] * 60 + parts[1]
+            elif len(parts) == 1:
+                duration = parts[0]
+        except Exception:
+            pass
+
+        chapters.append({
+            "id": sec_id,
+            "title": sec_title,
+            "duration": duration or 300,
+            "listen_url": s.get("listen_url", "").replace("http://", "https://")
+        })
+
+    if not chapters:
+        chapters.append({
+            "id": "full_zip",
+            "title": "Play full Audiobook",
+            "duration": 3600,
+            "listen_url": item.get("url_zip_file", "").replace("http://", "https://")
+        })
+
+    return {
+        "id": f"a{librivox_id}",
+        "title": item.get("title", "Untitled Audiobook"),
+        "author": author,
+        "cover_url": cover_url,
+        "description": item.get("description", ""),
+        "listen_url": item.get("url_zip_file", "").replace("http://", "https://"),
+        "stream_url": item.get("url_rss", "").replace("http://", "https://"),
+        "chapters": json.dumps(chapters)
+    }
+
 def seed_data():
     print("Initializing Database tables...")
     init_db()
@@ -304,42 +371,33 @@ def seed_data():
         )
         print(f"Processed Google Book: '{fetched_title}' ({genre})")
 
-    print("Seeding Audiobooks...")
-    audiobooks = [
-        ("a102", "The Adventures of Huckleberry Finn", "Mark Twain", "https://archive.org/services/img/102", 
-         "Twain's classic story of Huck and Jim sailing down the Mississippi River.", 
-         "https://www.archive.org/download/huck_finn_librivox/huck_finn_librivox_64kb_mp3.zip", 
-         "https://librivox.org/rss/102", 
-         json.dumps([{"id": "all", "title": "Play Full Audiobook", "duration": 3600, "listen_url": "https://www.archive.org/download/huck_finn_librivox/huck_finn_librivox_64kb_mp3.zip"}])),
-        ("a282", "The Art of War", "Sun Tzu", "https://archive.org/services/img/282", 
-         "The ancient Chinese military treatise attributed to Sun Tzu.", 
-         "https://www.archive.org/download/art_of_war_librivox/art_of_war_librivox_64kb_mp3.zip", 
-         "https://librivox.org/rss/282", 
-         json.dumps([{"id": "all", "title": "Play Full Audiobook", "duration": 3600, "listen_url": "https://www.archive.org/download/art_of_war_librivox/art_of_war_librivox_64kb_mp3.zip"}])),
-        ("a2125", "Frankenstein; or, The Modern Prometheus", "Mary Wollstonecraft Shelley", "https://archive.org/services/img/2125", 
-         "A classic gothic horror narrative detailing Victor Frankenstein and his creature.", 
-         "https://www.archive.org/download/frankenstein_0810_librivox/frankenstein_0810_librivox_64kb_mp3.zip", 
-         "https://librivox.org/rss/2125", 
-         json.dumps([{"id": "all", "title": "Play Full Audiobook", "duration": 3600, "listen_url": "https://www.archive.org/download/frankenstein_0810_librivox/frankenstein_0810_librivox_64kb_mp3.zip"}])),
-        ("a1121", "Romeo and Juliet", "William Shakespeare", "https://archive.org/services/img/1121", 
-         "Shakespeare's legendary tragedy of star-crossed lovers.", 
-         "https://www.archive.org/download/romeo_juliet_librivox/romeo_juliet_librivox_64kb_mp3.zip", 
-         "https://librivox.org/rss/1121", 
-         json.dumps([{"id": "all", "title": "Play Full Audiobook", "duration": 3600, "listen_url": "https://www.archive.org/download/romeo_juliet_librivox/romeo_juliet_librivox_64kb_mp3.zip"}])),
-        ("a981", "The Call of the Wild", "Jack London", "https://archive.org/services/img/981", 
-         "The adventure of Buck, a sled dog in the Klondike Gold Rush.", 
-         "https://www.archive.org/download/call_of_the_wild_librivox/call_of_the_wild_librivox_64kb_mp3.zip", 
-         "https://librivox.org/rss/981", 
-         json.dumps([{"id": "all", "title": "Play Full Audiobook", "duration": 3600, "listen_url": "https://www.archive.org/download/call_of_the_wild_librivox/call_of_the_wild_librivox_64kb_mp3.zip"}]))
+    print("Seeding Audiobooks from LibriVox...")
+    librivox_ids = [
+        381, 271, 365, 436, 417, 314, 901, 47, 449, 253,
+        133, 86, 510, 755, 527, 200, 56, 332, 1095, 119
     ]
-    
-    audio_sql = """
-    INSERT INTO audiobooks (id, title, author, cover_url, description, listen_url, stream_url, chapters)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (id) DO NOTHING
-    """
-    for a in audiobooks:
-        execute_query(audio_sql, a, is_write=True)
+    for lid in librivox_ids:
+        db_id = f"a{lid}"
+        existing = execute_query("SELECT id FROM audiobooks WHERE id = %s", (db_id,))
+        if existing:
+            print(f"Audiobook '{db_id}' already exists. Skipping LibriVox fetch.")
+            continue
+            
+        print(f"Fetching LibriVox ID {lid} dynamically...")
+        try:
+            mapped = fetch_and_map_librivox_book(str(lid))
+            execute_query(
+                """
+                INSERT INTO audiobooks (id, title, author, cover_url, description, listen_url, stream_url, chapters)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (id) DO NOTHING
+                """,
+                (mapped["id"], mapped["title"], mapped["author"], mapped["cover_url"], mapped["description"], mapped["listen_url"], mapped["stream_url"], mapped["chapters"]),
+                is_write=True
+            )
+            print(f"Successfully seeded audiobook: {mapped['title']}")
+        except Exception as e:
+            print(f"Error seeding LibriVox ID {lid}: {e}")
 
     print("Seeding Magazines...")
     magazines = [
