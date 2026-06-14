@@ -13,6 +13,7 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
+  --breakpoint-xs: 375px;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -145,6 +146,11 @@
 .swiper-slide { height: auto; }
 
 @utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+@utility scrollbar-hide {
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }

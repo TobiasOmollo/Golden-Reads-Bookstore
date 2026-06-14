@@ -5,7 +5,7 @@ const BASE = import.meta.env.VITE_API_URL;
 function getHeaders(customHeaders: Record<string, string> = {}): HeadersInit {
   const headers: Record<string, string> = { ...customHeaders };
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("golden_reads_token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -115,6 +115,11 @@ export const api = {
     bulletin: async (limit?: number): Promise<Article[]> => {
       return get<Article[]>(`/magazines/bulletin?limit=${limit || 30}`);
     },
+    localBriefing: (limit = 30) => get<Article[]>(`/magazines/local-briefing?limit=${limit}`),
+    flossyGossip: (limit = 30) => get<Article[]>(`/magazines/flossy-gossip?limit=${limit}`),
+    africaToday: (limit = 30) => get<Article[]>(`/magazines/africa-today?limit=${limit}`),
+    globalFeed: (limit = 30) => get<Article[]>(`/magazines/global-feed?limit=${limit}`),
+    trends: (limit = 30) => get<Article[]>(`/magazines/trends?limit=${limit}`),
     eastAfrica: async (limit = 60): Promise<Article[]> => {
       return get<Article[]>(`/magazines/eastafrica?limit=${limit}`);
     },

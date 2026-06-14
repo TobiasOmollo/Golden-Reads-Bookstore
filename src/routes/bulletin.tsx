@@ -16,10 +16,35 @@ export const Route = createFileRoute("/bulletin")({
   component: BulletinPage,
 });
 
+import { useState } from "react";
+
+const TABS = [
+  { id: "localBriefing", label: "Local Briefing" },
+  { id: "flossyGossip", label: "Flossy Gossip" },
+  { id: "africaToday", label: "Africa Today" },
+  { id: "globalFeed", label: "Global Feed" },
+  { id: "trends", label: "Trends & Gossip" },
+] as const;
+
 function BulletinPage() {
+  const [activeTab, setActiveTab] = useState<typeof TABS[number]["id"]>("localBriefing");
+
   const { data: articles = [], isLoading, isError, refetch } = useQuery<Article[]>({
-    queryKey: ["magazines", "bulletin"],
-    queryFn: () => api.magazines.bulletin(),
+    queryKey: ["magazines", activeTab],
+    queryFn: () => {
+      switch (activeTab) {
+        case "localBriefing":
+          return api.magazines.localBriefing();
+        case "flossyGossip":
+          return api.magazines.flossyGossip();
+        case "africaToday":
+          return api.magazines.africaToday();
+        case "globalFeed":
+          return api.magazines.globalFeed();
+        case "trends":
+          return api.magazines.trends();
+      }
+    },
   });
 
   return (
@@ -36,6 +61,31 @@ function BulletinPage() {
         <p className="text-sm text-muted-foreground mt-0.5">
           Latest headlines and live recurrent news updates.
         </p>
+
+        {/* Categories Tab Bar */}
+        <div className="mt-6 flex overflow-x-auto whitespace-nowrap scrollbar-hide gap-1 border-b border-divider pb-1.5 no-scrollbar">
+          {TABS.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`font-mono text-xs uppercase tracking-wider relative px-4 py-2.5 transition-colors cursor-pointer shrink-0 ${
+                  active ? "text-gold font-bold" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+                {active && (
+                  <motion.span
+                    layoutId="activeTabLine"
+                    className="absolute bottom-0 left-0 right-0 h-[2px] bg-gold rounded-full"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
 
         {/* Articles List Grid */}
         <div className="mt-8 min-h-[300px]">

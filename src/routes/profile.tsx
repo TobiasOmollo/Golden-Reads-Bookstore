@@ -18,7 +18,7 @@ function ProfilePage() {
   const { theme, toggle } = useTheme();
   const [user, setUser] = useState<any>(null);
   useEffect(() => {
-    const session = localStorage.getItem("golden_reads_user");
+    const session = sessionStorage.getItem("user");
     if (session) setUser(JSON.parse(session));
   }, []);
 
@@ -82,8 +82,8 @@ function ProfilePage() {
             destructive
             href="/login"
             onClick={() => {
-              localStorage.removeItem("golden_reads_user");
-              localStorage.removeItem("golden_reads_token");
+              sessionStorage.removeItem("user");
+              sessionStorage.removeItem("token");
             }}
           />
         </div>

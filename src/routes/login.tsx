@@ -112,7 +112,7 @@ function LoginPage() {
 
   // Check if session exists on mount
   useEffect(() => {
-    const session = localStorage.getItem("golden_reads_user");
+    const session = sessionStorage.getItem("user");
     if (session) {
       navigate({ to: "/" });
     }
@@ -171,8 +171,8 @@ function LoginPage() {
       const response = await api.auth.login(email, password);
       setSuccessMsg("Welcome back! Loading your bookshelf...");
       // Save authentic live session values upon server validation approval
-      localStorage.setItem("golden_reads_token", response.access_token);
-      localStorage.setItem("golden_reads_user", JSON.stringify(response.user));
+      sessionStorage.setItem("token", response.access_token);
+      sessionStorage.setItem("user", JSON.stringify(response.user));
       setTimeout(() => {
         navigate({ to: "/" });
       }, 1200);
@@ -218,8 +218,8 @@ function LoginPage() {
       const response = await api.auth.signup(email, password, profileDetails);
       setSuccessMsg("Account created successfully! Preparing your library...");
       // Save authentic live session values upon server validation approval
-      localStorage.setItem("golden_reads_token", response.access_token);
-      localStorage.setItem("golden_reads_user", JSON.stringify(response.user));
+      sessionStorage.setItem("token", response.access_token);
+      sessionStorage.setItem("user", JSON.stringify(response.user));
       setTimeout(() => {
         navigate({ to: "/" });
       }, 1500);
@@ -248,8 +248,8 @@ function LoginPage() {
       
       setSuccessMsg("Google sign-in verified! Redirecting...");
       // Save authentic live session values upon server validation approval
-      localStorage.setItem("golden_reads_token", response.access_token);
-      localStorage.setItem("golden_reads_user", JSON.stringify(response.user));
+      sessionStorage.setItem("token", response.access_token);
+      sessionStorage.setItem("user", JSON.stringify(response.user));
       setTimeout(() => {
         navigate({ to: "/" });
       }, 1200);

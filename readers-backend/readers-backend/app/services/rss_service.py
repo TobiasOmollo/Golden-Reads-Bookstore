@@ -122,7 +122,14 @@ async def fetch_feeds(
     if countries:
         filtered = [s for s in filtered if s['country'] in countries]
     if categories:
-        filtered = [s for s in filtered if s['category'] in categories]
+        filtered = [
+            s for s in filtered
+            if (
+                s['category'] in categories
+                if not isinstance(s['category'], list)
+                else any(c in categories for c in s['category'])
+            )
+        ]
     if sources:
         filtered = [s for s in filtered
                     if any(q.lower() in s['name'].lower() for q in sources)]

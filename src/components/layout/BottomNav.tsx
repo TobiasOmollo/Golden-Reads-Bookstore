@@ -28,7 +28,7 @@ export function BottomNav() {
             }`}
           >
             <Icon size={18} className="transition-transform group-active:scale-95" />
-            <span className="text-[9px] font-mono tracking-wider mt-1 uppercase truncate max-w-[64px]">
+            <span className="hidden xs:block text-[9px] font-mono tracking-wider mt-1 uppercase truncate max-w-[64px]">
               {link.label}
             </span>
           </Link>

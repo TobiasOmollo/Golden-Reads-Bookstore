@@ -106,3 +106,36 @@ async def search_archive(q: str = Query(..., min_length=2, description="Query to
             if isinstance(e, HTTPException):
                 raise e
             raise HTTPException(status_code=500, detail=f"Internet Archive lookup failed: {str(e)}")
+
+@router.get("/local-briefing", response_model=list[Article])
+async def get_local_briefing(limit: int = Query(30, ge=1, le=100)):
+    return await fetch_feeds(categories=["local-briefing"], limit=limit)
+
+@router.get("/flossy-gossip", response_model=list[Article])
+async def get_flossy_gossip(limit: int = Query(30, ge=1, le=100)):
+    return await fetch_feeds(categories=["flossy-gossip"], limit=limit)
+
+@router.get("/africa-today", response_model=list[Article])
+async def get_africa_today(limit: int = Query(30, ge=1, le=100)):
+    return await fetch_feeds(categories=["africa-today"], limit=limit)
+
+@router.get("/global-feed", response_model=list[Article])
+async def get_global_feed(limit: int = Query(30, ge=1, le=100)):
+    return await fetch_feeds(categories=["global-feed"], limit=limit)
+
+@router.get("/trends", response_model=list[Article])
+async def get_trends(limit: int = Query(30, ge=1, le=100)):
+    raw_articles = await fetch_feeds(categories=["flossy-gossip"], limit=100)
+    trending_keywords = [
+        "gossip", "scandal", "drama", "romance", "wedding", "relationship", "love",
+        "celeb", "celebrity", "celebrities", "star", "socialite", "music", "artist",
+        "singer", "trending", "trends", "rumor", "rumour", "vibe"
+    ]
+    filtered = []
+    for a in raw_articles:
+        text = f"{a.title} {a.summary}".lower()
+        if any(kw in text for kw in trending_keywords):
+            filtered.append(a)
+    filtered.sort(key=lambda a: a.publishedAt or "0000", reverse=True)
+    return filtered[:limit]
+

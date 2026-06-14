@@ -78,7 +78,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { name: "theme-color", content: "#0F0F1A" },
+      { name: "theme-color", content: "#C9A84C" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "Golden Reads" },
       { title: "Golden Reads – Discover, Buy and Read Books Anywhere" },
       {
         name: "description",
@@ -118,6 +120,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: appCss,
       },
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/favicon.svg",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/favicon.svg",
+      },
     ],
   }),
   shellComponent: RootShell,
@@ -148,9 +159,12 @@ function RootComponent() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const isLoginPage = window.location.pathname === "/login";
-      const session = localStorage.getItem("golden_reads_user");
-      if (!session && !isLoginPage) {
-        navigate({ to: "/login" });
+      const isSignupPage = window.location.pathname === "/signup";
+      if (!isLoginPage && !isSignupPage) {
+        const token = sessionStorage.getItem("token");
+        if (!token) {
+          navigate({ to: "/login" });
+        }
       }
     }
   }, [navigate, router.state.location.pathname]);

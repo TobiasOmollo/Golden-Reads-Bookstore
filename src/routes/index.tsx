@@ -39,7 +39,7 @@ function HomePage() {
   const [userName, setUserName] = useState("Reader");
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const session = localStorage.getItem("golden_reads_user");
+      const session = sessionStorage.getItem("user");
       if (session) {
         try {
           const parsed = JSON.parse(session);

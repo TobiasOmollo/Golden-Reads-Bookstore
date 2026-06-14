@@ -54,7 +54,7 @@ export function TopBar() {
           </Link>
           
           {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-6">
+          <nav className="hidden md:flex overflow-x-auto whitespace-nowrap scrollbar-hide gap-4 px-4 items-center">
             {navLinks.map((link) => {
               const active =
                 link.to === "/" ? pathname === "/" : pathname.startsWith(link.to);
@@ -62,7 +62,7 @@ export function TopBar() {
                 <Link
                   key={link.to}
                   to={link.to}
-                  className={`font-mono text-xs uppercase tracking-wider relative py-1 transition-colors ${
+                  className={`font-mono text-xs uppercase tracking-wider relative py-1 transition-colors shrink-0 ${
                     active ? "text-gold" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
